@@ -1,177 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BAGVIEW | AR Eco-Tourism</title>
-    
+    <title>BAGVIEW</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-        :root { --accent: #00ff88; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000 !important; font-family: 'Segoe UI', sans-serif; color: white; }
+        body { margin: 0; background: #000; font-family: sans-serif; color: white; overflow: hidden; }
 
-        /* 1. ORIGINAL WELCOME PAGE LAYOUT */
-        #welcome-screen { 
-            position: fixed; inset: 0; z-index: 9999; background: #000; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            text-align: center; transition: 0.8s ease; 
+        /* ORIGINAL MINIMALIST WELCOME */
+        #welcome-page {
+            position: fixed; inset: 0; z-index: 9999; background: #000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .welcome-title { letter-spacing: 15px; font-size: 3rem; font-weight: 100; margin: 0; color: white; }
-        .welcome-sub { opacity: 0.6; font-size: 9px; letter-spacing: 5px; margin-top: 10px; margin-bottom: 50px; text-transform: uppercase; }
+        .title { letter-spacing: 15px; font-size: 40px; font-weight: 100; margin: 0; }
+        .caption { letter-spacing: 5px; font-size: 10px; opacity: 0.5; margin-top: 10px; margin-bottom: 40px; text-transform: uppercase; }
         
-        /* 2. WALKTHROUGH VIDEO LAYOUT (RESTORED HORIZONTAL) */
-        #tutorial-screen { 
-            position: fixed; inset: 0; z-index: 9998; background: #000; 
-            display: none; flex-direction: column; align-items: center; justify-content: center; 
-            opacity: 0; transition: 0.6s; 
-        }
-        .video-container { 
-            width: 85%; max-width: 600px; 
-            border: 2px solid var(--accent); /* Restored Green Accent Border */
-            border-radius: 5px; overflow: hidden; 
-            aspect-ratio: 16/9; background: #000;
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
-        }
-        video#tuto-video { width: 100%; height: 100%; object-fit: cover; }
-        
-        .skip-btn { 
-            margin-top: 30px; background: transparent; border: none; 
-            color: rgba(255,255,255,0.5); font-size: 10px; letter-spacing: 3px; 
-            cursor: pointer; text-decoration: underline; text-underline-offset: 5px;
+        .start-btn {
+            padding: 12px 35px; border: 1px solid white; background: none;
+            color: white; font-size: 10px; letter-spacing: 3px; cursor: pointer;
         }
 
-        /* START BUTTON STYLE */
-        .start-btn { 
-            padding: 15px 40px; border: 1px solid white; background: transparent; 
-            color: white; font-size: 11px; letter-spacing: 4px; border-radius: 2px; 
-            cursor: pointer; transition: 0.3s;
+        /* RESTORED WALKTHROUGH LAYOUT */
+        #walkthrough-page {
+            position: fixed; inset: 0; z-index: 9998; background: #000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
         }
-        .start-btn:active { background: white; color: black; }
-
-        /* 3. MAIN UI & AR */
-        #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0; transition: 1s; }
-        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s; cursor: pointer; }
-        .station-card.react { transform: translateY(-30px); border-color: var(--accent); }
+        .video-frame {
+            width: 80%; max-width: 500px; aspect-ratio: 16/9;
+            border: 2px solid #00ff88; /* Your Green Accent */
+            background: #000; overflow: hidden;
+        }
+        video#tutorial-video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* AR Video positioning */
-        video { position: fixed !important; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: 1; }
-        a-scene { z-index: 2; }
+        .skip-link {
+            margin-top: 25px; background: none; border: none;
+            color: #666; font-size: 10px; letter-spacing: 2px;
+            text-decoration: underline; cursor: pointer;
+        }
+
+        /* UI LAYER */
+        #ui-layer { position: fixed; inset: 0; z-index: 100; display: none; pointer-events: none; }
+        #gallery {
+            position: absolute; bottom: 40px; left: 0; right: 0;
+            display: flex; gap: 15px; overflow-x: auto; padding: 0 20px;
+            scrollbar-width: none; pointer-events: auto;
+        }
+        .card {
+            min-width: 90px; height: 120px; background: #111; border: 1px solid #333;
+            flex-shrink: 0; transition: 0.3s;
+        }
+        .card.active { transform: translateY(-25px); border-color: #00ff88; }
+        
+        /* MindAR Fix */
+        .mindar-ui-overlay { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="welcome-screen">
-        <h1 class="welcome-title">BAGVIEW</h1>
-        <p class="welcome-sub">Environmental AR Guide</p>
-        <button class="start-btn" onclick="goToTutorial()">START EXPERIENCE</button>
+    <div id="welcome-page">
+        <h1 class="title">BAGVIEW</h1>
+        <p class="caption">ENVIRONMENTAL AR GUIDE</p>
+        <button class="start-btn" onclick="openWalkthrough()">START</button>
     </div>
 
-    <div id="tutorial-screen">
-        <div class="video-container">
-            <video id="tuto-video" playsinline loop>
+    <div id="walkthrough-page">
+        <div class="video-frame">
+            <video id="tutorial-video" playsinline loop>
                 <source src="Assets/tutorial.mp4" type="video/mp4">
             </video>
         </div>
-        <button class="skip-btn" onclick="startAR()">SKIP GUIDE</button>
+        <button class="skip-link" onclick="enterAR()">SKIP TUTORIAL</button>
     </div>
 
     <div id="ui-layer">
-        <div style="position:absolute; bottom:0; left:0; right:0; padding-bottom:120px; background:linear-gradient(transparent, black);">
-            <div id="gallery-root" style="display:flex; gap:15px; overflow-x:auto; padding:20px; scrollbar-width:none;"></div>
-        </div>
+        <div id="gallery"></div>
     </div>
 
     <a-scene id="ar-scene" mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" embedded vr-mode-ui="enabled: false">
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
         <a-entity mindar-image-target="targetIndex: 0" id="t0"></a-entity>
         <a-entity mindar-image-target="targetIndex: 1" id="t1"></a-entity>
-        </a-scene>
+        <a-entity mindar-image-target="targetIndex: 2" id="t2"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 3" id="t3"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 4" id="t4"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 5" id="t5"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 6" id="t6"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 7" id="t7"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 8" id="t8"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 9" id="t9"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 10" id="t10"></a-entity>
+        <a-entity mindar-image-target="targetIndex: 11" id="t11"></a-entity>
+    </a-scene>
 
     <script>
-        const tourLink = "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d";
+        const panoLink = "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d";
         const stations = [
-            { name: "Map", thumb: "Assets/A1_Map.jpg", url: "https://jmflorencio.github.io/BaguioBotanicalMap/" },
-            { name: "Arbor", thumb: "Assets/Arbor.png", url: tourLink },
-            { name: "Cactus & Succulents", thumb: "Assets/Cactus&Succulents.png", url: "#" },
-            { name: "Chinese Garden", thumb: "Assets/Chinese%20Garden.png", url: "#" },
-            { name: "Friendship Garden", thumb: "Assets/City%20of%20Vaughan%20Friendship%20Garden.png", url: tourLink },
-            { name: "Cordillera Village", thumb: "Assets/Cordillera%20Village.png", url: "#" },
-            { name: "Greenhouse", thumb: "Assets/Greenhouse.png", url: "#" },
-            { name: "Japanese Garden", thumb: "Assets/Japanese%20Garden.png", url: tourLink },
-            { name: "Japanese Tunnel", thumb: "Assets/Japanese%20Tunnel.png", url: tourLink },
-            { name: "Korea Garden", thumb: "Assets/Korea%20Garden.png", url: tourLink },
-            { name: "Orchidarium", thumb: "Assets/Orchidarium.png", url: tourLink },
-            { name: "PMSEA Garden", thumb: "Assets/PMSEA%20Garden.png", url: tourLink }
+            { name: "MAP", thumb: "Assets/A1_Map.jpg", url: "https://jmflorencio.github.io/BaguioBotanicalMap/" },
+            { name: "ARBOR", thumb: "Assets/Arbor.png", url: panoLink },
+            { name: "CACTUS", thumb: "Assets/Cactus&Succulents.png", url: "#" },
+            { name: "CHINESE", thumb: "Assets/Chinese%20Garden.png", url: "#" },
+            { name: "FRIENDSHIP", thumb: "Assets/City%20of%20Vaughan%20Friendship%20Garden.png", url: panoLink },
+            { name: "VILLAGE", thumb: "Assets/Cordillera%20Village.png", url: "#" },
+            { name: "GREENHOUSE", thumb: "Assets/Greenhouse.png", url: "#" },
+            { name: "JAPANESE", thumb: "Assets/Japanese%20Garden.png", url: panoLink },
+            { name: "TUNNEL", thumb: "Assets/Japanese%20Tunnel.png", url: panoLink },
+            { name: "KOREA", thumb: "Assets/Korea%20Garden.png", url: panoLink },
+            { name: "ORCHID", thumb: "Assets/Orchidarium.png", url: panoLink },
+            { name: "PMSEA", thumb: "Assets/PMSEA%20Garden.png", url: panoLink }
         ];
 
-        function goToTutorial() {
-            const welcome = document.getElementById('welcome-screen');
-            const tutorial = document.getElementById('tutorial-screen');
-            const video = document.getElementById('tuto-video');
-            
-            welcome.style.opacity = '0';
-            setTimeout(() => {
-                welcome.style.display = 'none';
-                tutorial.style.display = 'flex';
-                setTimeout(() => { 
-                    tutorial.style.opacity = '1'; 
-                    video.play();
-                }, 50);
-            }, 800);
+        function openWalkthrough() {
+            document.getElementById('welcome-page').style.display = 'none';
+            const walk = document.getElementById('walkthrough-page');
+            walk.style.display = 'flex';
+            document.getElementById('tutorial-video').play();
         }
 
-        async function startAR() {
-            const tutorial = document.getElementById('tutorial-screen');
-            const ui = document.getElementById('ui-layer');
-            const video = document.getElementById('tuto-video');
+        async function enterAR() {
+            document.getElementById('tutorial-video').pause();
+            document.getElementById('walkthrough-page').style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'block';
             
-            video.pause();
-            tutorial.style.opacity = '0';
-            
-            setTimeout(async () => {
-                tutorial.style.display = 'none';
-                ui.style.opacity = '1';
-                ui.style.pointerEvents = 'auto';
-                
-                const sceneEl = document.querySelector('a-scene');
-                try {
-                    await sceneEl.systems['mindar-image-system'].start();
-                } catch (e) { console.error("Camera Error", e); }
-            }, 600);
+            const sceneEl = document.querySelector('a-scene');
+            await sceneEl.systems['mindar-image-system'].start();
         }
 
-        // AR MATCH LOGIC: ONLY OPENS LINK ON TARGET MATCH
+        // TARGET LOGIC: OPEN LINK ONLY ON MATCH
         stations.forEach((s, i) => {
             const target = document.getElementById(`t${i}`);
             if(target) {
                 target.addEventListener("targetFound", () => {
-                    handleReaction(i, true);
-                    window.open(stations[i].url, '_blank'); // Trigger link
+                    const card = document.getElementById(`card-${i}`);
+                    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+                    if(card) {
+                        card.classList.add('active');
+                        card.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                    }
+                    window.open(stations[i].url, '_blank');
                 });
-                target.addEventListener("targetLost", () => handleReaction(i, false));
+                target.addEventListener("targetLost", () => {
+                    document.getElementById(`card-${i}`).classList.remove('active');
+                });
             }
         });
 
-        function handleReaction(index, active) {
-            const card = document.getElementById(`card-${index}`);
-            if(!card) return;
-            document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-            if(active) {
-                card.classList.add('react');
-                card.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-            }
-        }
-
         function buildUI() {
-            const root = document.getElementById('gallery-root');
-            root.innerHTML = stations.map((s, i) => `
-                <div class="station-card" id="card-${i}" onclick="handleReaction(${i}, true)">
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = stations.map((s, i) => `
+                <div class="card" id="card-${i}">
                     <img src="${s.thumb}" style="width:100%; height:75%; object-fit:cover;">
-                    <div style="font-size:8px; text-align:center; padding:5px; font-weight:bold;">${s.name}</div>
+                    <div style="font-size:7px; text-align:center; padding-top:8px; letter-spacing:1px;">${s.name}</div>
                 </div>
             `).join('');
         }
