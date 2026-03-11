@@ -27,7 +27,7 @@
         .a-canvas { background: transparent !important; }
 
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; }
-        .top-nav, .bottom-area, .full-page, .icon-btn, .cam-btn, .station-card, #inquiry-panel { pointer-events: auto; }
+        .top-nav, .bottom-area, .icon-btn, .cam-btn, .station-card, #inquiry-panel { pointer-events: auto; }
 
         #match-notification { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; font-weight: 900; font-size: 11px; letter-spacing: 2px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; backdrop-filter: blur(10px); background: var(--accent); color: #000; text-align: center; min-width: 220px; }
         #match-notification.show { opacity: 1; top: 120px; }
@@ -45,7 +45,6 @@
         .pulse { width: 8px; height: 8px; background: #444; border-radius: 50%; transition: 0.3s; } 
         .pulse.live { background: var(--accent); animation: pulse-anim 2s infinite; }
 
-        /* INQUIRY PANEL STYLES */
         #inquiry-panel { position: fixed; inset: 0; z-index: 5500; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); display: none; padding: 40px 20px; flex-direction: column; overflow-y: auto; }
         .inquiry-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 2px solid var(--accent); }
 
@@ -77,20 +76,9 @@
             <h2 style="letter-spacing:5px; margin:0; font-weight: 900;">INFO & HELP</h2>
             <div onclick="toggleInquiry()" style="cursor:pointer; background:rgba(255,255,255,0.1); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">✕</div>
         </div>
-        
         <div class="inquiry-card">
             <h4 style="color:var(--accent); margin:0 0 10px 0;">HOW TO USE</h4>
-            <p style="font-size:12px; opacity:0.8; line-height:1.6;">Point your camera at the physical markers located around the park. When a match is found, interactive content will automatically load.</p>
-        </div>
-
-        <div class="inquiry-card">
-            <h4 style="color:var(--accent); margin:0 0 10px 0;">PARK HOURS</h4>
-            <p style="font-size:12px; opacity:0.8;">Daily: 6:00 AM – 6:00 PM<br>Entrance Fee: ₱10.00 (Adults) / ₱5.00 (Students/Seniors)</p>
-        </div>
-
-        <div class="inquiry-card">
-            <h4 style="color:var(--accent); margin:0 0 10px 0;">STATION LIST</h4>
-            <p style="font-size:11px; opacity:0.6;">• Japanese Tunnel<br>• Chinese Garden<br>• Korea Garden<br>• Orchidarium<br>• Cordillera Village</p>
+            <p style="font-size:12px; opacity:0.8; line-height:1.6;">Point your camera at the physical markers. When a match is found, info will pop up!</p>
         </div>
     </div>
 
@@ -120,7 +108,6 @@
                 <div id="gps-status" style="font-size:11px; font-weight:900;">CAMERA: STANDBY</div>
             </div>
         </div>
-
         <div class="bottom-area">
             <div class="bottom-dock" id="gallery-hud">
                 <div class="scroll-container" id="gallery-root"></div>
@@ -144,11 +131,11 @@
         const stations = [
             { name: "Map", thumb: "Assets/A1_Map.jpg", link: "https://jmflorencio.github.io/BaguioBotanicalMap/" },
             { name: "Arbor", thumb: "Assets/Arbor.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
-            { name: "Cactus & Succulents", thumb: "Assets/Cactus&Succulents.png", link: "" },
-            { name: "Chinese Garden", thumb: "Assets/Chinese%20Garden.png", link: "" },
+            { name: "Cactus & Succulents", thumb: "Assets/Cactus&Succulents.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
+            { name: "Chinese Garden", thumb: "Assets/Chinese%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
             { name: "Friendship Garden", thumb: "Assets/City%20of%20Vaughan%20Friendship%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
-            { name: "Cordillera Village", thumb: "Assets/Cordillera%20Village.png", link: "" },
-            { name: "Greenhouse", thumb: "Assets/Greenhouse.png", link: "" },
+            { name: "Cordillera Village", thumb: "Assets/Cordillera%20Village.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
+            { name: "Greenhouse", thumb: "Assets/Greenhouse.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
             { name: "Japanese Garden", thumb: "Assets/Japanese%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
             { name: "Japanese Tunnel", thumb: "Assets/Japanese%20Tunnel.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
             { name: "Korea Garden", thumb: "Assets/Korea%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
@@ -173,7 +160,6 @@
             document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
             card.classList.add('react');
             card.scrollIntoView({behavior: "smooth", inline: "center"});
-            
             const toast = document.getElementById('match-notification');
             toast.innerText = "FIND THE TARGET IMAGE";
             toast.classList.add('show');
@@ -187,9 +173,9 @@
                 const entity = document.createElement('a-entity');
                 entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
                 entity.addEventListener("targetFound", () => {
-                    document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                     const card = document.getElementById(`card-${i}`);
                     if(card) {
+                        document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                         card.classList.add('react');
                         card.scrollIntoView({behavior: "smooth", inline: "center"});
                     }
@@ -207,7 +193,6 @@
 
         async function toggleScanner() {
             const btn = document.getElementById('cam-toggle');
-            const hud = document.getElementById('gallery-hud');
             const sceneEl = document.querySelector('a-scene');
             const statusBox = document.getElementById('status-container');
             const statusPulse = document.getElementById('status-pulse');
@@ -215,33 +200,31 @@
             const camIcon = document.getElementById('cam-icon');
             
             if(!btn.classList.contains('active')) {
+                // Check if the site is secure
+                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                    alert("AR requires an HTTPS connection. Please check your URL.");
+                    return;
+                }
+
                 try {
+                    // Pre-request permissions manually
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    stream.getTracks().forEach(track => track.stop()); // Close test stream
+
                     await sceneEl.systems['mindar-image-system'].start();
                     btn.classList.add('active');
-                    hud.classList.add('visible');
+                    document.getElementById('gallery-hud').classList.add('visible');
                     document.getElementById('shutter').style.opacity = '0';
-                    
-                    // Update UI to LIVE state
                     statusBox.classList.add('live');
                     statusPulse.classList.add('live');
                     statusText.innerText = "CAMERA: LIVE";
                     statusText.style.color = "var(--accent)";
                     camIcon.setAttribute('fill', '#000');
                 } catch (err) {
-                    alert("Camera access denied!");
+                    alert("Camera Access Denied: Please check browser permissions.");
                 }
             } else {
-                sceneEl.systems['mindar-image-system'].stop();
-                btn.classList.remove('active');
-                hud.classList.remove('visible');
-                document.getElementById('shutter').style.opacity = '1';
-                
-                // Update UI to STANDBY state
-                statusBox.classList.remove('live');
-                statusPulse.classList.remove('live');
-                statusText.innerText = "CAMERA: STANDBY";
-                statusText.style.color = "#666";
-                camIcon.setAttribute('fill', '#fff');
+                location.reload(); // Best way to fully release camera hardware on mobile
             }
         }
 
