@@ -56,7 +56,6 @@
         .bottom-dock { padding: 20px 0 130px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transform: translateY(50px); transition: 0.5s; }
         .bottom-dock.visible { opacity: 1; transform: translateY(0); }
         
-        /* Updated Scroll Container for better centering */
         .scroll-container { 
             display: flex; 
             gap: 12px; 
@@ -68,8 +67,8 @@
         }
         .scroll-container::-webkit-scrollbar { display: none; }
         
-        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; position: relative; }
-        .station-card.react { transform: translateY(-20px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,255,136,0.3); z-index: 10; }
+        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; position: relative; transform: translateY(0); }
+        .station-card.react { transform: translateY(-30px); border-color: var(--accent); box-shadow: 0 15px 25px rgba(0,255,136,0.3); z-index: 10; }
 
         .nav-bar { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 25px; }
         .icon-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -195,6 +194,7 @@
             }
         }
 
+        // TOGGLE LOGIC: Tap to go UP, Tap again to go BACK DOWN
         function handleCardTap(index) {
             const card = document.getElementById(`card-${index}`);
             const toast = document.getElementById('match-notification');
@@ -202,33 +202,29 @@
 
             if (!card || !scrollContainer) return;
 
-            const isAlreadyActive = card.classList.contains('react');
+            const isAlreadyUp = card.classList.contains('react');
 
-            if (!isAlreadyActive) {
+            if (isAlreadyUp) {
+                // GO BACK TO ORIGINAL POSITION
+                card.classList.remove('react');
+                toast.innerText = "SELECTION RESET";
+            } else {
+                // GO TO UP POSITION
                 document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                 card.classList.add('react');
                 toast.innerText = "FIND THE TARGET IMAGE";
-            } else {
-                // VISUAL PING FOR RE-TAP
-                card.style.transition = "0.1s";
-                card.style.transform = "translateY(-30px) scale(1.1)";
-                setTimeout(() => {
-                    card.style.transition = "0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
-                    card.style.transform = "translateY(-20px) scale(1)";
-                }, 100);
-                toast.innerText = "SEARCHING FOR " + stations[index].name.toUpperCase();
+
+                // Center the active card
+                const containerWidth = scrollContainer.offsetWidth;
+                const cardOffset = card.offsetLeft;
+                const cardWidth = card.offsetWidth;
+                const scrollToPosition = cardOffset - (containerWidth / 2) + (cardWidth / 2);
+
+                scrollContainer.scrollTo({
+                    left: scrollToPosition,
+                    behavior: 'smooth'
+                });
             }
-
-            // ROBUST CENTERING LOGIC
-            const containerWidth = scrollContainer.offsetWidth;
-            const cardOffset = card.offsetLeft;
-            const cardWidth = card.offsetWidth;
-            const scrollToPosition = cardOffset - (containerWidth / 2) + (cardWidth / 2);
-
-            scrollContainer.scrollTo({
-                left: scrollToPosition,
-                behavior: 'smooth'
-            });
 
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
@@ -246,7 +242,6 @@
                     if(card) {
                         document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                         card.classList.add('react');
-                        // Center matched card
                         const scrollContainer = document.querySelector('.scroll-container');
                         const scrollToPosition = card.offsetLeft - (scrollContainer.offsetWidth / 2) + (card.offsetWidth / 2);
                         scrollContainer.scrollTo({ left: scrollToPosition, behavior: 'smooth' });
