@@ -9,17 +9,10 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-        :root { --accent: #00ff88; --error: #ff4444; --glass: rgba(0, 0, 0, 0.75); --blur: blur(20px); }
+        :root { --accent: #00ff88; --scanning: #ffaa00; --error: #ff4444; --glass: rgba(0, 0, 0, 0.75); --blur: blur(20px); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
-            background-color: #000; font-family: 'Segoe UI', sans-serif; color: white; 
-            transition: background 0.3s;
-        }
-
-        /* Use this class to force black background in Standby */
-        body.camera-off { background-color: #000 !important; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; color: white; }
 
         video { 
             position: fixed !important; 
@@ -36,6 +29,7 @@
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; background: transparent !important; }
         .top-nav, .bottom-area, .icon-btn, .cam-btn, .station-card, #inquiry-panel { pointer-events: auto; }
 
+        /* Unified Status Toast (Center Screen) */
         #match-notification { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; font-weight: 900; font-size: 11px; letter-spacing: 2px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; backdrop-filter: blur(10px); background: var(--accent); color: #000; text-align: center; min-width: 220px; }
         #match-notification.show { opacity: 1; top: 120px; }
 
@@ -46,11 +40,17 @@
         video.tut-vid { width: 100%; height: 100%; object-fit: cover; position: relative !important; z-index: 1 !important; }
         .skip-fab { margin-top: 25px; background: rgba(255,255,255,0.05); padding: 12px 35px; border-radius: 50px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; letter-spacing: 2px; font-weight: 900; }
 
+        /* Top Status Bar Improvements */
         .top-nav { position: absolute; top: 0; left: 0; right: 0; padding: 30px 20px; display: flex; justify-content: space-between; align-items: flex-start; }
-        .gps-display { background: var(--glass); backdrop-filter: var(--blur); padding: 10px 18px; border-radius: 12px; border-left: 3px solid #444; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
-        .gps-display.live { border-left-color: var(--accent); }
+        .gps-display { background: var(--glass); backdrop-filter: var(--blur); padding: 10px 18px; border-radius: 12px; border-left: 3px solid #444; display: flex; align-items: center; gap: 10px; transition: 0.3s; min-width: 160px; }
+        
+        /* Status Colors */
+        .gps-display.status-live { border-left-color: var(--scanning); }
+        .gps-display.status-match { border-left-color: var(--accent); box-shadow: 0 0 15px rgba(0, 255, 136, 0.3); }
+
         .pulse { width: 8px; height: 8px; background: #444; border-radius: 50%; transition: 0.3s; } 
-        .pulse.live { background: var(--accent); animation: pulse-anim 2s infinite; }
+        .pulse.live { background: var(--scanning); animation: pulse-scanning 1.5s infinite; }
+        .pulse.match { background: var(--accent); animation: pulse-match 0.5s infinite alternate; }
 
         #inquiry-panel { position: fixed; inset: 0; z-index: 5500; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); display: none; padding: 40px 20px; flex-direction: column; overflow-y: auto; }
         .inquiry-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 2px solid var(--accent); }
@@ -65,16 +65,17 @@
 
         .nav-bar { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 25px; }
         .icon-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .cam-btn { width: 75px; height: 75px; border-radius: 50%; background: #222; border: 3px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .cam-btn { width: 75px; height: 75px; border-radius: 50%; background: #000; border: 3px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
         .cam-btn.active { border-color: var(--accent); background: var(--accent); }
 
         #webview-container { position: fixed; inset: 0; z-index: 3000; background: #000; display: none; flex-direction: column; }
         #shutter { position: fixed; inset: 0; z-index: -1; background: #000; transition: 0.8s; pointer-events: none; }
         
-        @keyframes pulse-anim { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); } }
+        @keyframes pulse-scanning { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+        @keyframes pulse-match { from { transform: scale(1); box-shadow: 0 0 0px var(--accent); } to { transform: scale(1.3); box-shadow: 0 0 10px var(--accent); } }
     </style>
 </head>
-<body class="camera-off">
+<body>
 
     <div id="match-notification">IDENTICAL MATCH</div>
 
@@ -112,7 +113,7 @@
         <div class="top-nav">
             <div class="gps-display" id="status-container">
                 <div class="pulse" id="status-pulse"></div>
-                <div id="gps-status" style="font-size:11px; font-weight:900;">CAMERA: STANDBY</div>
+                <div id="gps-status" style="font-size:11px; font-weight:900; letter-spacing:1px;">CAMERA: STANDBY</div>
             </div>
         </div>
         <div class="bottom-area">
@@ -162,11 +163,37 @@
             `).join('');
         }
 
+        function updateStatusUI(type) {
+            const statusBox = document.getElementById('status-container');
+            const statusPulse = document.getElementById('status-pulse');
+            const statusText = document.getElementById('gps-status');
+
+            // Reset classes
+            statusBox.classList.remove('status-live', 'status-match');
+            statusPulse.classList.remove('live', 'match');
+
+            if (type === 'standby') {
+                statusText.innerText = "CAMERA: STANDBY";
+                statusText.style.color = "#fff";
+            } else if (type === 'scanning') {
+                statusBox.classList.add('status-live');
+                statusPulse.classList.add('live');
+                statusText.innerText = "SCANNING...";
+                statusText.style.color = "var(--scanning)";
+            } else if (type === 'match') {
+                statusBox.classList.add('status-match');
+                statusPulse.classList.add('match');
+                statusText.innerText = "MATCH FOUND!";
+                statusText.style.color = "var(--accent)";
+            }
+        }
+
         function handleCardTap(index) {
             const card = document.getElementById(`card-${index}`);
             document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
             card.classList.add('react');
             card.scrollIntoView({behavior: "smooth", inline: "center"});
+            
             const toast = document.getElementById('match-notification');
             toast.innerText = "FIND THE TARGET IMAGE";
             toast.classList.add('show');
@@ -180,24 +207,29 @@
                 const entity = document.createElement('a-entity');
                 entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
                 entity.addEventListener("targetFound", () => {
+                    updateStatusUI('match');
+                    
                     const card = document.getElementById(`card-${i}`);
                     if(card) {
                         document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                         card.classList.add('react');
                         card.scrollIntoView({behavior: "smooth", inline: "center"});
                     }
+                    
                     const toast = document.getElementById('match-notification');
                     toast.innerText = "IDENTICAL MATCH FOUND!";
                     toast.classList.add('show');
+                    
                     setTimeout(() => { 
                         toast.classList.remove('show');
                         if (s.link && s.link !== "") openStation(i);
+                        // Return to scanning status after handling match
+                        setTimeout(() => { if(document.getElementById('cam-toggle').classList.contains('active')) updateStatusUI('scanning'); }, 3000);
                     }, 1500);
                 });
                 container.appendChild(entity);
             });
 
-            // Observer to ensure the Mind-AR video stays styled correctly
             const observer = new MutationObserver(() => {
                 const video = document.querySelector('video:not(.tut-vid)');
                 if (video) {
@@ -216,13 +248,8 @@
         async function toggleScanner() {
             const btn = document.getElementById('cam-toggle');
             const sceneEl = document.querySelector('a-scene');
-            const statusBox = document.getElementById('status-container');
-            const statusPulse = document.getElementById('status-pulse');
-            const statusText = document.getElementById('gps-status');
             const camIcon = document.getElementById('cam-icon');
-            const shutter = document.getElementById('shutter');
             
-            // ON MODE
             if(!btn.classList.contains('active')) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -230,39 +257,18 @@
 
                     await sceneEl.systems['mindar-image-system'].start();
                     
-                    document.body.classList.remove('camera-off');
                     document.body.style.backgroundColor = "transparent";
-                    shutter.style.display = 'none'; 
+                    document.getElementById('shutter').style.display = 'none'; 
                     
                     btn.classList.add('active');
                     document.getElementById('gallery-hud').classList.add('visible');
-                    statusBox.classList.add('live');
-                    statusPulse.classList.add('live');
-                    statusText.innerText = "CAMERA: LIVE";
-                    statusText.style.color = "var(--accent)";
+                    updateStatusUI('scanning');
                     camIcon.setAttribute('fill', '#000');
                 } catch (err) {
                     alert("Camera blocked. Please check browser permissions.");
                 }
-            } 
-            // OFF MODE
-            else {
-                sceneEl.systems['mindar-image-system'].stop();
-                
-                // Cleanup the video element
-                const arVideo = document.querySelector('video:not(.tut-vid)');
-                if (arVideo) arVideo.remove();
-
-                document.body.classList.add('camera-off');
-                shutter.style.display = 'block';
-                
-                btn.classList.remove('active');
-                document.getElementById('gallery-hud').classList.remove('visible');
-                statusBox.classList.remove('live');
-                statusPulse.classList.remove('live');
-                statusText.innerText = "CAMERA: STANDBY";
-                statusText.style.color = "#fff";
-                camIcon.setAttribute('fill', '#fff');
+            } else {
+                location.reload(); 
             }
         }
 
@@ -281,9 +287,9 @@
             document.getElementById('tut-video').pause();
             document.getElementById('tutorial-page').classList.add('hidden');
             document.getElementById('ui-layer').classList.remove('hidden');
-            document.body.classList.add('camera-off'); 
             buildUI();
             setupTracking();
+            updateStatusUI('standby');
         }
 
         function openStation(index) {
