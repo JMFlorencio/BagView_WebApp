@@ -220,7 +220,7 @@
             } else {
                 document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                 card.classList.add('react');
-                toast.innerText = "FIND THE TARGET IMAGE";
+                toast.innerText = "SCAN TARGET";
                 const scrollToPosition = card.offsetLeft - (scrollContainer.offsetWidth / 2) + (card.offsetWidth / 2);
                 scrollContainer.scrollTo({ left: scrollToPosition, behavior: 'smooth' });
             }
@@ -331,4 +331,5 @@
     </script>
 </body>
 </html>
+
 
