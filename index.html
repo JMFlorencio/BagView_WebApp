@@ -12,10 +12,8 @@
         :root { --accent: #00ff88; --error: #ff4444; --glass: rgba(0, 0, 0, 0.75); --blur: blur(20px); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* FIX 1: Body must be transparent for camera to show through */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; font-family: 'Segoe UI', sans-serif; color: white; }
 
-        /* FIX 2: Force the video feed to stay behind the UI but above the background */
         video { 
             position: fixed !important; 
             top: 0 !important; 
@@ -26,7 +24,6 @@
             z-index: -1 !important; 
         }
 
-        /* FIX 3: Ensure AR canvas doesn't have a black background */
         .a-canvas { background: transparent !important; }
 
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; }
@@ -110,7 +107,7 @@
 
     <div id="shutter"></div>
 
-    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" embedded renderer="transparent: true; alpha: true;" vr-mode-ui="enabled: false">
+    <a-scene id="ar-scene" mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" embedded renderer="transparent: true; alpha: true;" vr-mode-ui="enabled: false">
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
         <a-entity id="target-container"></a-entity>
     </a-scene>
@@ -145,38 +142,50 @@
 
         function handleCardTap(index) {
             const card = document.getElementById(`card-${index}`);
-            const isAlreadyActive = card.classList.contains('react');
             document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-            if (!isAlreadyActive) {
-                card.classList.add('react');
-                card.scrollIntoView({behavior: "smooth", inline: "center"});
-                const toast = document.getElementById('match-notification');
-                toast.innerText = "FIND THE TARGET IMAGE";
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 2000);
-            }
+            card.classList.add('react');
+            card.scrollIntoView({behavior: "smooth", inline: "center"});
+            
+            const toast = document.getElementById('match-notification');
+            toast.innerText = "FIND THE TARGET IMAGE";
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
         function setupTracking() {
             const container = document.getElementById('target-container');
+            container.innerHTML = ""; // Clear old entities
+            
             stations.forEach((s, i) => {
                 const entity = document.createElement('a-entity');
                 entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
+                
+                // RESTORED: Reaction function when scanned
                 entity.addEventListener("targetFound", () => {
+                    console.log("Target " + i + " Found");
+                    
+                    // 1. Highlight UI
                     document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                     const card = document.getElementById(`card-${i}`);
                     if(card) {
                         card.classList.add('react');
                         card.scrollIntoView({behavior: "smooth", inline: "center"});
                     }
+                    
+                    // 2. Show Toast
                     const toast = document.getElementById('match-notification');
                     toast.innerText = "IDENTICAL MATCH FOUND!";
                     toast.classList.add('show');
+                    
+                    // 3. Open Link after short delay
                     setTimeout(() => { 
                         toast.classList.remove('show');
-                        if (s.link) openStation(i); 
-                    }, 1200);
+                        if (s.link && s.link !== "") {
+                            openStation(i);
+                        }
+                    }, 1500);
                 });
+
                 container.appendChild(entity);
             });
         } 
@@ -188,7 +197,6 @@
             
             if(!btn.classList.contains('active')) {
                 try {
-                    // Start the scanner
                     await sceneEl.systems['mindar-image-system'].start();
                     
                     btn.classList.add('active');
@@ -196,11 +204,10 @@
                     document.getElementById('shutter').style.opacity = '0';
                     document.getElementById('gps-status').innerText = "SCANNING...";
 
-                    // MOBILE VIDEO FIX: Force the system-generated video to play
                     const checkVideo = setInterval(() => {
                         const video = document.querySelector('video');
                         if (video) {
-                            video.setAttribute('playsinline', ''); // Essential for iOS
+                            video.setAttribute('playsinline', '');
                             video.setAttribute('webkit-playsinline', ''); 
                             video.play();
                             clearInterval(checkVideo);
@@ -208,7 +215,7 @@
                     }, 500);
 
                 } catch (err) {
-                    alert("Camera access denied! Check your browser settings.");
+                    alert("Camera access denied! Ensure you're on HTTPS and allowed permissions.");
                 }
             } else {
                 location.reload(); 
@@ -232,7 +239,7 @@
         function openStation(index) {
             const s = stations[index];
             document.getElementById('web-frame').src = s.link;
-            document.getElementById('web-title').innerText = s.name + " INFO";
+            document.getElementById('web-title').innerText = s.name.toUpperCase() + " INFO";
             document.getElementById('webview-container').style.display = 'flex';
         }
 
