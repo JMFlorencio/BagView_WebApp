@@ -12,25 +12,29 @@
         :root { --accent: #00ff88; --glass: rgba(0, 0, 0, 0.75); --blur: blur(20px); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        /* CRITICAL: Background must be transparent for video to show through */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; font-family: 'Segoe UI', sans-serif; color: white; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000 !important; font-family: 'Segoe UI', sans-serif; color: white; }
 
-        /* Ensure the injected video element is properly layered */
-        video { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; z-index: -2 !important; }
+        video { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; z-index: -1 !important; }
 
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
         .top-nav, .bottom-area, .advisory-bar, .icon-btn, .cam-btn, .station-card, .noti-bell, #inquiry-panel { pointer-events: auto; }
 
-        /* UI ELEMENTS */
+        /* TOP NAVIGATION */
         .top-nav { position: absolute; top: 0; left: 0; right: 0; padding: 30px 20px; display: flex; justify-content: space-between; align-items: center; }
         .gps-display { background: var(--glass); backdrop-filter: var(--blur); padding: 10px 18px; border-radius: 12px; border-left: 3px solid #444; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
         .gps-display.live { border-left-color: var(--accent); }
         .pulse { width: 8px; height: 8px; background: #444; border-radius: 50%; }
         .pulse.live { background: var(--accent); animation: pulse-anim 2s infinite; }
 
+        /* INQUIRY PANEL */
         #inquiry-panel { position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); display: none; padding: 40px 20px; flex-direction: column; }
         .inquiry-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 2px solid var(--accent); }
 
+        /* ADVISORY BAR */
+        .advisory-bar { position: fixed; top: -120px; left: 20px; right: 20px; background: #ffcc00; color: #000; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1); z-index: 4000; }
+        .advisory-bar.active { top: 30px; }
+
+        /* BOTTOM AREA & DOCK */
         .bottom-area { position: absolute; bottom: 0; left: 0; right: 0; }
         .bottom-dock { padding: 20px 0 130px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transform: translateY(50px); transition: 0.5s; }
         .bottom-dock.visible { opacity: 1; transform: translateY(0); }
@@ -44,9 +48,7 @@
         .cam-btn { width: 75px; height: 75px; border-radius: 50%; background: #000; border: 3px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
         .cam-btn.active { border-color: var(--accent); background: var(--accent); }
 
-        /* SHUTTER: Start at 0 so video is hidden until Camera is Live */
-        #shutter { position: fixed; inset: 0; z-index: -1; background: #000; opacity: 1; transition: 0.8s; pointer-events: none; }
-        
+        #shutter { position: fixed; inset: 0; z-index: -1; background: #000; transition: 0.8s; pointer-events: none; }
         @keyframes pulse-anim { 0% { transform: scale(1); opacity: 1; } 70% { transform: scale(2.5); opacity: 0; } 100% { transform: scale(1); opacity: 0; } }
     </style>
 </head>
@@ -57,8 +59,14 @@
             <h2 style="letter-spacing:5px; margin:0;">INQUIRY</h2>
             <div onclick="toggleInquiry()" style="cursor:pointer; background:rgba(255,255,255,0.1); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">✕</div>
         </div>
-        <div class="inquiry-card"><h4 style="color:var(--accent); margin:0;">OPERATING HOURS</h4><p style="font-size:12px; opacity:0.7;">Daily: 6:00 AM - 6:00 PM</p></div>
-        <div class="inquiry-card"><h4 style="color:var(--accent); margin:0;">CONTACT</h4><p style="font-size:12px; opacity:0.7;">info@baguiobotanical.ph</p></div>
+        <div class="inquiry-card">
+            <h4 style="color:var(--accent); margin:0 0 10px 0;">OPERATING HOURS</h4>
+            <p style="font-size:12px; margin:0; opacity:0.7;">Daily: 6:00 AM - 6:00 PM</p>
+        </div>
+        <div class="inquiry-card">
+            <h4 style="color:var(--accent); margin:0 0 10px 0;">CONTACT</h4>
+            <p style="font-size:12px; margin:0; opacity:0.7;">info@baguiobotanical.ph</p>
+        </div>
     </div>
 
     <div id="ui-layer">
@@ -84,9 +92,17 @@
         </div>
     </div>
 
+    <div id="advisory-trigger" class="advisory-bar" onclick="this.classList.remove('active')">
+        <div style="font-size:24px;">⚠️</div>
+        <div>
+            <div style="font-weight:900; font-size:12px;">PARK ADVISORY</div>
+            <div style="font-size:10px; opacity:0.8;">Maintenance at Japanese Tunnel section.</div>
+        </div>
+    </div>
+
     <div id="shutter"></div>
 
-    <a-scene id="ar-scene" mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" embedded renderer="transparent: true; alpha: true; antialias: true;" vr-mode-ui="enabled: false">
+    <a-scene id="ar-scene" mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" embedded renderer="transparent: true; alpha: true;" vr-mode-ui="enabled: false">
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
         <a-entity id="target-container"></a-entity>
     </a-scene>
@@ -95,17 +111,15 @@
         const stations = [
             { name: "Map", thumb: "Assets/A1_Map.jpg" },
             { name: "Arbor", thumb: "Assets/Arbor.png" },
-            { name: "Cactus & Succulents", thumb: "Assets/Cactus&Succulents.png" },
             { name: "Chinese Garden", thumb: "Assets/Chinese%20Garden.png" },
-            { name: "Friendship Garden", thumb: "Assets/City%20of%20Vaughan%20Friendship%20Garden.png" },
-            { name: "Cordillera Village", thumb: "Assets/Cordillera%20Village.png" },
-            { name: "Greenhouse", thumb: "Assets/Greenhouse.png" },
-            { name: "Japanese Garden", thumb: "Assets/Japanese%20Garden.png" },
-            { name: "Japanese Tunnel", thumb: "Assets/Japanese%20Tunnel.png" },
-            { name: "Korea Garden", thumb: "Assets/Korea%20Garden.png" },
-            { name: "Orchidarium", thumb: "Assets/Orchidarium.png" },
-            { name: "PMSEA Garden", thumb: "Assets/PMSEA%20Garden.png" }
+            { name: "Japanese Garden", thumb: "Assets/Japanese%20Garden.png" }
         ];
+
+        function toggleInquiry() {
+            const panel = document.getElementById('inquiry-panel');
+            const isVisible = panel.style.display === 'flex';
+            panel.style.display = isVisible ? 'none' : 'flex';
+        }
 
         async function toggleScanner() {
             const btn = document.getElementById('cam-toggle');
@@ -115,27 +129,24 @@
             const camIcon = document.getElementById('cam-icon');
             const sceneEl = document.querySelector('a-scene');
             const hud = document.getElementById('gallery-hud');
-            const shutter = document.getElementById('shutter');
             
             if(!btn.classList.contains('active')) {
                 try {
                     await sceneEl.systems['mindar-image-system'].start();
                     btn.classList.add('active');
                     hud.classList.add('visible');
-                    shutter.style.opacity = '0'; // Reveal camera
-                    
+                    document.getElementById('shutter').style.opacity = '0';
                     statusBox.classList.add('live');
                     statusPulse.classList.add('live');
                     statusText.innerText = "CAMERA: LIVE";
                     statusText.style.color = "var(--accent)";
                     camIcon.setAttribute('fill', '#000');
-                } catch (err) { alert("Enable camera in settings."); }
+                } catch (err) { alert("Camera failed."); }
             } else {
                 sceneEl.systems['mindar-image-system'].stop();
                 btn.classList.remove('active');
                 hud.classList.remove('visible');
-                shutter.style.opacity = '1'; // Hide camera
-                
+                document.getElementById('shutter').style.opacity = '1';
                 statusBox.classList.remove('live');
                 statusPulse.classList.remove('live');
                 statusText.innerText = "CAMERA: STANDBY";
@@ -144,9 +155,11 @@
             }
         }
 
-        function toggleInquiry() {
-            const panel = document.getElementById('inquiry-panel');
-            panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
+        function handleCardTap(index) {
+            const card = document.getElementById(`card-${index}`);
+            const isActive = card.classList.contains('react');
+            document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
+            if (!isActive) card.classList.add('react');
         }
 
         function buildUI() {
@@ -156,14 +169,13 @@
                     <div style="height:75%; background:#1a1a1a; overflow:hidden;">
                         <img src="${s.thumb}" style="width:100%; height:100%; object-fit:cover;">
                     </div>
-                    <div style="font-size:8px; text-align:center; padding:8px 4px; font-weight:bold; color:#fff;">${s.name}</div>
+                    <div style="font-size:8px; text-align:center; padding:8px 4px; font-weight:bold; color:#fff; text-transform:uppercase;">${s.name}</div>
                 </div>
             `).join('');
         }
 
-        function handleCardTap(index) {
-            document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-            document.getElementById(`card-${index}`).classList.add('react');
+        function showAdvisory() {
+            document.getElementById('advisory-trigger').classList.add('active');
         }
 
         buildUI();
