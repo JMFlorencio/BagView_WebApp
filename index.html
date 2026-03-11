@@ -14,6 +14,7 @@
         
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000 !important; font-family: 'Segoe UI', sans-serif; color: white; }
 
+        /* FIX: Ensure MindAR video is visible */
         video { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; z-index: 1 !important; }
         a-scene { z-index: 2 !important; }
 
@@ -21,32 +22,31 @@
         #welcome-screen { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.5s; }
         .start-btn { padding: 20px 40px; border: 2px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; letter-spacing: 2px; border-radius: 50px; cursor: pointer; margin-top: 20px; }
 
-        /* NEW: TUTORIAL SCREEN LAYOUT */
+        /* ADDED: TUTORIAL SCREEN (Maintains your style) */
         #tutorial-screen { position: fixed; inset: 0; z-index: 9998; background: #000; display: none; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: 0.5s; }
-        .video-frame { 
-            width: 85%; max-width: 500px; aspect-ratio: 16/9; 
-            border: 2px solid var(--accent); /* Your Green Accent Border */
-            background: #000; overflow: hidden; 
-        }
+        .video-container { width: 85%; max-width: 500px; aspect-ratio: 16/9; border: 2px solid var(--accent); background: #000; overflow: hidden; }
         #tuto-video { width: 100%; height: 100%; object-fit: cover; }
         .skip-btn { margin-top: 25px; background: none; border: none; color: #666; font-size: 10px; letter-spacing: 2px; text-decoration: underline; cursor: pointer; }
 
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0; transition: 0.5s; }
-        .top-nav, .bottom-area, .icon-btn, .cam-btn, .station-card, .noti-bell, #inquiry-panel { pointer-events: auto; }
+        .top-nav, .bottom-area, .advisory-bar, .icon-btn, .cam-btn, .station-card, .noti-bell, #inquiry-panel { pointer-events: auto; }
 
-        /* NAVIGATION & HUD (Your Original Styles) */
+        /* TOP NAVIGATION */
         .top-nav { position: absolute; top: 0; left: 0; right: 0; padding: 30px 20px; display: flex; justify-content: space-between; align-items: center; }
         .gps-display { background: var(--glass); backdrop-filter: var(--blur); padding: 10px 18px; border-radius: 12px; border-left: 3px solid #444; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
         .gps-display.live { border-left-color: var(--accent); }
         .pulse { width: 8px; height: 8px; background: #444; border-radius: 50%; }
         .pulse.live { background: var(--accent); animation: pulse-anim 2s infinite; }
 
+        /* ADVISORY BAR */
         .advisory-bar { position: fixed; top: -120px; left: 20px; right: 20px; background: #ffcc00; color: #000; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; transition: 0.6s; z-index: 4000; }
         .advisory-bar.active { top: 30px; }
 
+        /* INQUIRY PANEL */
         #inquiry-panel { position: fixed; inset: 0; z-index: 5000; background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); display: none; padding: 40px 20px; flex-direction: column; }
         .inquiry-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 2px solid var(--accent); }
 
+        /* BOTTOM AREA & DOCK */
         .bottom-area { position: absolute; bottom: 0; left: 0; right: 0; }
         .bottom-dock { padding: 20px 0 130px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transform: translateY(50px); transition: 0.5s; }
         .bottom-dock.visible { opacity: 1; transform: translateY(0); }
@@ -61,6 +61,7 @@
         .cam-btn.active { border-color: var(--accent); background: var(--accent); }
 
         #shutter { position: fixed; inset: 0; z-index: 50; background: #000; opacity: 0; transition: 0.8s; pointer-events: none; }
+        
         @keyframes pulse-anim { 0% { transform: scale(1); opacity: 1; } 70% { transform: scale(2.5); opacity: 0; } 100% { transform: scale(1); opacity: 0; } }
     </style>
 </head>
@@ -69,11 +70,11 @@
     <div id="welcome-screen">
         <h1 style="letter-spacing:10px;">BAGVIEW</h1>
         <p style="opacity:0.6; font-size:12px;">ECO-TOURISM INTERACTIVE GUIDE</p>
-        <button class="start-btn" onclick="showTutorial()">START EXPERIENCE</button>
+        <button class="start-btn" onclick="startTutorial()">START SCANNER</button>
     </div>
 
     <div id="tutorial-screen">
-        <div class="video-frame">
+        <div class="video-container">
             <video id="tuto-video" playsinline loop>
                 <source src="Assets/tutorial.mp4" type="video/mp4">
             </video>
@@ -127,6 +128,7 @@
 
     <a-scene id="ar-scene" mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" embedded renderer="transparent: true; alpha: true;" vr-mode-ui="enabled: false">
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        
         <a-entity mindar-image-target="targetIndex: 0" id="target-0"></a-entity>
         <a-entity mindar-image-target="targetIndex: 1" id="target-1"></a-entity>
         <a-entity mindar-image-target="targetIndex: 2" id="target-2"></a-entity>
@@ -135,132 +137,4 @@
         <a-entity mindar-image-target="targetIndex: 5" id="target-5"></a-entity>
         <a-entity mindar-image-target="targetIndex: 6" id="target-6"></a-entity>
         <a-entity mindar-image-target="targetIndex: 7" id="target-7"></a-entity>
-        <a-entity mindar-image-target="targetIndex: 8" id="target-8"></a-entity>
-        <a-entity mindar-image-target="targetIndex: 9" id="target-9"></a-entity>
-        <a-entity mindar-image-target="targetIndex: 10" id="target-10"></a-entity>
-        <a-entity mindar-image-target="targetIndex: 11" id="target-11"></a-entity>
-    </a-scene>
-
-    <script>
-        const tourLink = "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d";
-        const stations = [
-            { name: "Map", thumb: "Assets/A1_Map.jpg", url: "https://jmflorencio.github.io/BaguioBotanicalMap/" },
-            { name: "Arbor", thumb: "Assets/Arbor.png", url: tourLink },
-            { name: "Cactus & Succulents", thumb: "Assets/Cactus&Succulents.png", url: "#" },
-            { name: "Chinese Garden", thumb: "Assets/Chinese%20Garden.png", url: "#" },
-            { name: "Friendship Garden", thumb: "Assets/City%20of%20Vaughan%20Friendship%20Garden.png", url: tourLink },
-            { name: "Cordillera Village", thumb: "Assets/Cordillera%20Village.png", url: "#" },
-            { name: "Greenhouse", thumb: "Assets/Greenhouse.png", url: "#" },
-            { name: "Japanese Garden", thumb: "Assets/Japanese%20Garden.png", url: tourLink },
-            { name: "Japanese Tunnel", thumb: "Assets/Japanese%20Tunnel.png", url: tourLink },
-            { name: "Korea Garden", thumb: "Assets/Korea%20Garden.png", url: tourLink },
-            { name: "Orchidarium", thumb: "Assets/Orchidarium.png", url: tourLink },
-            { name: "PMSEA Garden", thumb: "Assets/PMSEA%20Garden.png", url: tourLink }
-        ];
-
-        function showTutorial() {
-            document.getElementById('welcome-screen').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('welcome-screen').style.display = 'none';
-                const tutorial = document.getElementById('tutorial-screen');
-                tutorial.style.display = 'flex';
-                setTimeout(() => { 
-                    tutorial.style.opacity = '1'; 
-                    document.getElementById('tuto-video').play();
-                }, 50);
-            }, 500);
-        }
-
-        async function initExperience() {
-            document.getElementById('tuto-video').pause();
-            document.getElementById('tutorial-screen').style.opacity = '0';
-            setTimeout(() => document.getElementById('tutorial-screen').style.display = 'none', 500);
-            document.getElementById('ui-layer').style.opacity = '1';
-            
-            const sceneEl = document.querySelector('a-scene');
-            await sceneEl.systems['mindar-image-system'].start();
-            updateStatusUI(true);
-        }
-
-        async function toggleScanner() {
-            const btn = document.getElementById('cam-toggle');
-            const sceneEl = document.querySelector('a-scene');
-            const shutter = document.getElementById('shutter');
-            if(!btn.classList.contains('active')) {
-                await sceneEl.systems['mindar-image-system'].start();
-                shutter.style.opacity = '0';
-                updateStatusUI(true);
-            } else {
-                sceneEl.systems['mindar-image-system'].stop();
-                shutter.style.opacity = '1';
-                updateStatusUI(false);
-            }
-        }
-
-        function updateStatusUI(isLive) {
-            const btn = document.getElementById('cam-toggle');
-            const statusBox = document.getElementById('status-box');
-            const statusPulse = document.getElementById('status-pulse');
-            const statusText = document.getElementById('gps-status');
-            const hud = document.getElementById('gallery-hud');
-            const camIcon = document.getElementById('cam-icon');
-
-            if(isLive) {
-                btn.classList.add('active'); hud.classList.add('visible');
-                statusBox.classList.add('live'); statusPulse.classList.add('live');
-                statusText.innerText = "CAMERA: LIVE"; statusText.style.color = "var(--accent)";
-                camIcon.setAttribute('fill', '#000');
-            } else {
-                btn.classList.remove('active'); hud.classList.remove('visible');
-                statusBox.classList.remove('live'); statusPulse.classList.remove('live');
-                statusText.innerText = "CAMERA: STANDBY"; statusText.style.color = "#666";
-                camIcon.setAttribute('fill', '#fff');
-            }
-        }
-
-        stations.forEach((s, i) => {
-            const target = document.getElementById(`target-${i}`);
-            if(target) {
-                target.addEventListener("targetFound", () => {
-                    handleCardTap(i, true);
-                    // ONLY PLACE LINK OPENS: On Scanned Match
-                    if(stations[i].url !== "#") window.open(stations[i].url, '_blank');
-                });
-                target.addEventListener("targetLost", () => handleCardTap(i, false));
-            }
-        });
-
-        function handleCardTap(index, forceState) {
-            const card = document.getElementById(`card-${index}`);
-            const shouldReact = (forceState !== undefined) ? forceState : !card.classList.contains('react');
-            document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-            if (shouldReact) {
-                card.classList.add('react');
-                card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
-        }
-
-        function toggleInquiry() {
-            const panel = document.getElementById('inquiry-panel');
-            panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
-        }
-
-        function showAdvisory() {
-            document.getElementById('advisory-trigger').classList.add('active');
-        }
-
-        function buildUI() {
-            const root = document.getElementById('gallery-root');
-            root.innerHTML = stations.map((s, i) => `
-                <div class="station-card" id="card-${i}" onclick="handleCardTap(${i})">
-                    <div style="height:75%; background:#1a1a1a; overflow:hidden;">
-                        <img src="${s.thumb}" style="width:100%; height:100%; object-fit:cover;">
-                    </div>
-                    <div style="font-size:8px; text-align:center; padding:8px 4px; font-weight:bold; color:#fff;">${s.name}</div>
-                </div>
-            `).join('');
-        }
-        buildUI();
-    </script>
-</body>
-</html>
+        <a-entity mindar-image-target="targetIndex: 8" id="
