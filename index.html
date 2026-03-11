@@ -184,26 +184,45 @@
             }
         }
 
-        // UPDATED: Handle tapping card to go back/center
-        function handleCardTap(index) {
-            const card = document.getElementById(`card-${index}`);
-            const toast = document.getElementById('match-notification');
+      function handleCardTap(index) {
+    const card = document.getElementById(`card-${index}`);
+    const toast = document.getElementById('match-notification');
+    const scrollContainer = document.querySelector('.scroll-container');
 
-            // If user taps an ALREADY active card, just center it and notify
-            if (card.classList.contains('react')) {
-                card.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
-                toast.innerText = "SEARCHING FOR " + stations[index].name.toUpperCase();
-            } else {
-                // Normal tap logic for new selection
-                document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-                card.classList.add('react');
-                card.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
-                toast.innerText = "FIND THE TARGET IMAGE";
-            }
-            
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
+    // 1. Clear previous selection if clicking a NEW card
+    if (!card.classList.contains('react')) {
+        document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
+        card.classList.add('react');
+        toast.innerText = "FIND THE TARGET IMAGE";
+    } else {
+        // 2. If ALREADY active, we "ping" it and force it back to center
+        toast.innerText = "SEARCHING FOR " + stations[index].name.toUpperCase();
+        
+        // Visual "ping" effect to show the tap worked
+        card.style.transition = "0.1s";
+        card.style.transform = "translateY(-25px) scale(1.05)";
+        setTimeout(() => {
+            card.style.transition = "0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+            card.style.transform = "translateY(-20px) scale(1)";
+        }, 100);
+    }
+
+    // 3. Robust Centering Logic
+    // We calculate the exact center of the container and the card
+    const containerWidth = scrollContainer.offsetWidth;
+    const cardOffset = card.offsetLeft;
+    const cardWidth = card.offsetWidth;
+    const scrollTo = cardOffset - (containerWidth / 2) + (cardWidth / 2);
+
+    scrollContainer.scrollTo({
+        left: scrollTo,
+        behavior: 'smooth'
+    });
+
+    // 4. Show Notification
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+}
 
         function setupTracking() {
             const container = document.getElementById('target-container');
@@ -304,3 +323,4 @@
     </script>
 </body>
 </html>
+
