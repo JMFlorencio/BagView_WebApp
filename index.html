@@ -14,27 +14,26 @@
         
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; font-family: 'Segoe UI', sans-serif; color: white; }
 
-        video { 
-            position: fixed !important; 
-            top: 0 !important; 
-            left: 0 !important; 
-            width: 100vw !important; 
-            height: 100vh !important;
-            object-fit: cover !important; 
-            z-index: -1 !important; 
-        }
+        video { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; z-index: -1 !important; }
 
         .a-canvas { background: transparent !important; }
 
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; }
-        .top-nav, .bottom-area, .full-page, .advisory-trigger, .icon-btn, .cam-btn, .station-card { pointer-events: auto; }
+        .top-nav, .bottom-area, .advisory-bar, .icon-btn, .cam-btn, .station-card, #inquiry-panel { pointer-events: auto; }
 
+        /* NOTIFICATIONS & ADVISORIES */
         #match-notification { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; font-weight: 900; font-size: 11px; letter-spacing: 2px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; backdrop-filter: blur(10px); background: var(--accent); color: #000; text-align: center; min-width: 220px; }
         #match-notification.show { opacity: 1; top: 120px; }
 
+        .advisory-bar { position: fixed; top: -100px; left: 20px; right: 20px; background: #ffcc00; color: #000; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 4000; box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor: pointer; }
+        .advisory-bar.active { top: 30px; }
+
+        /* OVERLAY SCREENS */
         .overlay-screen { position: fixed; inset: 0; z-index: 2000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.8s ease; }
         .hidden { opacity: 0; pointer-events: none; visibility: hidden; }
         
+        #inquiry-panel { position: fixed; inset: 0; z-index: 4500; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); display: none; padding: 40px 20px; flex-direction: column; }
+
         .video-container { width: 90%; max-width: 600px; aspect-ratio: 16/9; border-radius: 20px; overflow: hidden; border: 1px solid var(--accent); position: relative; background: #050505; }
         video.tut-vid { width: 100%; height: 100%; object-fit: cover; position: relative !important; z-index: 1 !important; }
         .skip-fab { margin-top: 25px; background: rgba(255,255,255,0.05); padding: 12px 35px; border-radius: 50px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; letter-spacing: 2px; font-weight: 900; }
@@ -46,17 +45,17 @@
         .bottom-area { position: absolute; bottom: 0; left: 0; right: 0; }
         .bottom-dock { padding: 20px 0 130px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transform: translateY(50px); transition: 0.5s; }
         .bottom-dock.visible { opacity: 1; transform: translateY(0); }
-        .scroll-container { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px; scrollbar-width: none; }
+        .scroll-container { display: flex; gap: 12px; overflow-x: auto; padding: 20px 20px; scrollbar-width: none; }
         
-        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
-        .station-card.react { transform: translateY(-20px); border-color: var(--accent); }
+        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease; cursor: pointer; }
+        .station-card.react { transform: translateY(-30px); border-color: var(--accent); box-shadow: 0 15px 30px rgba(0, 255, 136, 0.3); }
 
         .nav-bar { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 25px; }
         .icon-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .cam-btn { width: 75px; height: 75px; border-radius: 50%; background: #000; border: 3px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .cam-btn.active { border-color: var(--accent); background: var(--accent); }
 
-        #webview-container { position: fixed; inset: 0; z-index: 3000; background: #000; display: none; flex-direction: column; }
+        #webview-container { position: fixed; inset: 0; z-index: 5000; background: #000; display: none; flex-direction: column; }
         #shutter { position: fixed; inset: 0; z-index: -1; background: #000; transition: 0.8s; pointer-events: none; }
         
         @keyframes pulse-anim { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); } }
@@ -64,7 +63,33 @@
 </head>
 <body>
 
+    <div id="advisory-trigger" class="advisory-bar" onclick="this.classList.remove('active')">
+        <div style="font-size:24px;">⚠️</div>
+        <div>
+            <div style="font-weight:900; font-size:12px; letter-spacing:1px;">PARK ADVISORY</div>
+            <div style="font-size:10px; opacity:0.8;">Maintenance at Japanese Tunnel section. Please use the upper trail.</div>
+        </div>
+    </div>
+
     <div id="match-notification">IDENTICAL MATCH</div>
+
+    <div id="inquiry-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+            <h2 style="letter-spacing:5px; margin:0;">INQUIRY</h2>
+            <button onclick="toggleInquiry()" style="background:none; border:1px solid #fff; color:#fff; border-radius:50%; width:40px; height:40px;">✕</button>
+        </div>
+        <div style="flex:1; overflow-y:auto;">
+            <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; margin-bottom:15px;">
+                <h4 style="color:var(--accent); margin-top:0;">PARK OPERATING HOURS</h4>
+                <p style="font-size:14px; opacity:0.7;">Daily: 6:00 AM - 6:00 PM<br>Baguio Botanical Garden, Leonard Wood Rd.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px;">
+                <h4 style="color:var(--accent); margin-top:0;">ECO-TOURISM CONTACT</h4>
+                <p style="font-size:14px; opacity:0.7;">Email: info@baguiobotanical.ph<br>Phone: (074) 442-3333</p>
+            </div>
+            <p style="font-size:11px; margin-top:30px; opacity:0.4; line-height:1.6;">BAGVIEW AR uses computer vision to identify park landmarks. Ensure you have adequate lighting and the target image is flat.</p>
+        </div>
+    </div>
 
     <div id="webview-container">
         <div style="background:#111; padding:15px; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #333;">
@@ -98,7 +123,7 @@
                 <div class="scroll-container" id="gallery-root"></div>
             </div>
             <div class="nav-bar">
-                <div class="icon-btn" onclick="alert('Inquiry Mode')"><svg viewBox="0 0 24 24" width="22" fill="#fff"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg></div>
+                <div class="icon-btn" onclick="toggleInquiry()"><svg viewBox="0 0 24 24" width="22" fill="#fff"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg></div>
                 <div class="cam-btn" id="cam-toggle" onclick="toggleScanner()"><svg viewBox="0 0 24 24" width="32" fill="white"><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm7-4h-2.69l-1.83-2H9.52l-1.83 2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-7 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></div>
                 <div class="icon-btn" onclick="location.reload()"><svg viewBox="0 0 24 24" width="22" fill="#fff"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></div>
             </div>
@@ -128,6 +153,11 @@
             { name: "PMSEA Garden", thumb: "Assets/PMSEA%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" }
         ];
 
+        function toggleInquiry() {
+            const panel = document.getElementById('inquiry-panel');
+            panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
+        }
+
         function buildUI() {
             const root = document.getElementById('gallery-root');
             root.innerHTML = stations.map((s, i) => `
@@ -138,33 +168,37 @@
                     <div style="font-size:8px; text-align:center; padding:8px 4px; font-weight:bold; color:#fff; text-transform:uppercase;">${s.name}</div>
                 </div>
             `).join('');
+            
+            setTimeout(() => {
+                document.getElementById('advisory-trigger').classList.add('active');
+            }, 3000);
         }
 
         function handleCardTap(index) {
             const card = document.getElementById(`card-${index}`);
+            const isAlreadyActive = card.classList.contains('react');
+
+            // Reset all other cards
             document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-            card.classList.add('react');
-            card.scrollIntoView({behavior: "smooth", inline: "center"});
-            
-            const toast = document.getElementById('match-notification');
-            toast.innerText = "FIND THE TARGET IMAGE";
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
+
+            if (!isAlreadyActive) {
+                card.classList.add('react');
+                card.scrollIntoView({behavior: "smooth", inline: "center"});
+                
+                const toast = document.getElementById('match-notification');
+                toast.innerText = "FIND THE TARGET IMAGE";
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }
         }
 
         function setupTracking() {
             const container = document.getElementById('target-container');
-            container.innerHTML = ""; // Clear old entities
-            
             stations.forEach((s, i) => {
                 const entity = document.createElement('a-entity');
                 entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
                 
-                // RESTORED: Reaction function when scanned
                 entity.addEventListener("targetFound", () => {
-                    console.log("Target " + i + " Found");
-                    
-                    // 1. Highlight UI
                     document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                     const card = document.getElementById(`card-${i}`);
                     if(card) {
@@ -172,54 +206,31 @@
                         card.scrollIntoView({behavior: "smooth", inline: "center"});
                     }
                     
-                    // 2. Show Toast
                     const toast = document.getElementById('match-notification');
-                    toast.innerText = "IDENTICAL MATCH FOUND!";
+                    toast.innerText = "MATCH FOUND: " + s.name.toUpperCase();
                     toast.classList.add('show');
                     
-                    // 3. Open Link after short delay
                     setTimeout(() => { 
                         toast.classList.remove('show');
-                        if (s.link && s.link !== "") {
-                            openStation(i);
-                        }
+                        if (s.link) openStation(i);
                     }, 1500);
                 });
-
                 container.appendChild(entity);
             });
-        } 
+        }
 
         async function toggleScanner() {
             const btn = document.getElementById('cam-toggle');
-            const hud = document.getElementById('gallery-hud');
             const sceneEl = document.querySelector('a-scene');
-            
             if(!btn.classList.contains('active')) {
                 try {
                     await sceneEl.systems['mindar-image-system'].start();
-                    
                     btn.classList.add('active');
-                    hud.classList.add('visible');
+                    document.getElementById('gallery-hud').classList.add('visible');
                     document.getElementById('shutter').style.opacity = '0';
                     document.getElementById('gps-status').innerText = "SCANNING...";
-
-                    const checkVideo = setInterval(() => {
-                        const video = document.querySelector('video');
-                        if (video) {
-                            video.setAttribute('playsinline', '');
-                            video.setAttribute('webkit-playsinline', ''); 
-                            video.play();
-                            clearInterval(checkVideo);
-                        }
-                    }, 500);
-
-                } catch (err) {
-                    alert("Camera access denied! Ensure you're on HTTPS and allowed permissions.");
-                }
-            } else {
-                location.reload(); 
-            }
+                } catch (err) { alert("Camera Error"); }
+            } else { location.reload(); }
         }
 
         function goToTutorial() {
