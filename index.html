@@ -56,12 +56,30 @@
         .bottom-dock { padding: 20px 0 130px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transform: translateY(50px); transition: 0.5s; }
         .bottom-dock.visible { opacity: 1; transform: translateY(0); }
         
-        .scroll-container { 
-            display: flex; gap: 12px; overflow-x: auto; 
-            padding: 0 45vw; scrollbar-width: none; 
-            scroll-behavior: smooth; position: relative;
-        }
-        .scroll-container::-webkit-scrollbar { display: none; }
+       .scroll-container { 
+    display: flex; 
+    gap: 12px; 
+    overflow-x: auto; 
+    /* Changed padding: 0 45vw to 20px to prevent the "clumping" in the middle */
+    padding: 0 20px 20px 20px; 
+    scrollbar-width: none; 
+    scroll-behavior: smooth; 
+    position: relative;
+    /* This ensures cards align to the left immediately */
+    justify-content: flex-start; 
+    align-items: flex-end;
+    width: 100%;
+}
+
+.bottom-dock { 
+    padding: 20px 0 130px; 
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); 
+    opacity: 0; 
+    transform: translateY(50px); 
+    transition: 0.5s;
+    /* Ensure the dock takes up the full width of the screen */
+    width: 100vw; 
+}
         
         .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; position: relative; transform: translateY(0); }
         .station-card.react { transform: translateY(-30px); border-color: var(--accent); z-index: 10; }
@@ -313,3 +331,4 @@
     </script>
 </body>
 </html>
+
