@@ -29,8 +29,7 @@
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; background: transparent !important; }
         .top-nav, .bottom-area, .icon-btn, .cam-btn, .station-card, #inquiry-panel { pointer-events: auto; }
 
-        #match-notification { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; font-weight: 900; font-size: 11px; letter-spacing: 2px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; backdrop-filter: blur(10px); background: var(--accent); color: #000; text-align: center; min-width: 200px; }
-        #match-notification.show { opacity: 1; top: 120px; }
+        /* Notification box removed from CSS */
 
         .overlay-screen { position: fixed; inset: 0; z-index: 2000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.8s ease; }
         .hidden { opacity: 0; pointer-events: none; visibility: hidden; }
@@ -94,8 +93,6 @@
     </style>
 </head>
 <body>
-
-    <div id="match-notification">SCAN TARGET</div>
 
     <div id="inquiry-panel">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
@@ -206,22 +203,17 @@
 
         function handleCardTap(index) {
             const card = document.getElementById(`card-${index}`);
-            const toast = document.getElementById('match-notification');
             const scrollContainer = document.querySelector('.scroll-container');
             if (!card || !scrollContainer) return;
 
             const isAlreadyUp = card.classList.contains('react');
             if (isAlreadyUp) {
                 card.classList.remove('react');
-                toast.classList.remove('show');
             } else {
                 document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                 card.classList.add('react');
-                toast.innerText = "SCAN TARGET";
-                toast.classList.add('show');
                 const scrollToPosition = card.offsetLeft - (scrollContainer.offsetWidth / 2) + (card.offsetWidth / 2);
                 scrollContainer.scrollTo({ left: scrollToPosition, behavior: 'smooth' });
-                setTimeout(() => toast.classList.remove('show'), 2000);
             }
         }
 
