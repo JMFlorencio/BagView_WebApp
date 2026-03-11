@@ -12,11 +12,17 @@
         :root { --accent: #00ff88; --glass: rgba(0, 0, 0, 0.75); --blur: blur(20px); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; font-family: 'Segoe UI', sans-serif; color: white; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000 !important; font-family: 'Segoe UI', sans-serif; color: white; }
 
-        video { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; z-index: -2 !important; }
+        /* FIX: Ensure MindAR video is visible */
+        video { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; object-fit: cover !important; z-index: 1 !important; }
+        a-scene { z-index: 2 !important; }
 
-        #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+        /* WELCOME/START PAGE */
+        #welcome-screen { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.5s; }
+        .start-btn { padding: 20px 40px; border: 2px solid var(--accent); background: transparent; color: var(--accent); font-weight: bold; letter-spacing: 2px; border-radius: 50px; cursor: pointer; margin-top: 20px; }
+
+        #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0; transition: 0.5s; }
         .top-nav, .bottom-area, .advisory-bar, .icon-btn, .cam-btn, .station-card, .noti-bell, #inquiry-panel { pointer-events: auto; }
 
         /* TOP NAVIGATION */
@@ -26,8 +32,8 @@
         .pulse { width: 8px; height: 8px; background: #444; border-radius: 50%; }
         .pulse.live { background: var(--accent); animation: pulse-anim 2s infinite; }
 
-        /* NOTIFICATION / ADVISORY BAR */
-        .advisory-bar { position: fixed; top: -120px; left: 20px; right: 20px; background: #ffcc00; color: #000; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1); z-index: 4000; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        /* ADVISORY BAR */
+        .advisory-bar { position: fixed; top: -120px; left: 20px; right: 20px; background: #ffcc00; color: #000; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; transition: 0.6s; z-index: 4000; }
         .advisory-bar.active { top: 30px; }
 
         /* INQUIRY PANEL */
@@ -40,20 +46,26 @@
         .bottom-dock.visible { opacity: 1; transform: translateY(0); }
         .scroll-container { display: flex; gap: 12px; overflow-x: auto; padding: 20px 20px; scrollbar-width: none; }
         
-        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); cursor: pointer; }
-        .station-card.react { transform: translateY(-35px); border-color: var(--accent); }
+        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: transform 0.4s; cursor: pointer; }
+        .station-card.react { transform: translateY(-35px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0, 255, 136, 0.2); }
 
         .nav-bar { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 25px; }
         .icon-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .cam-btn { width: 75px; height: 75px; border-radius: 50%; background: #000; border: 3px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
         .cam-btn.active { border-color: var(--accent); background: var(--accent); }
 
-        #shutter { position: fixed; inset: 0; z-index: -1; background: #000; opacity: 1; transition: 0.8s; pointer-events: none; }
+        #shutter { position: fixed; inset: 0; z-index: 50; background: #000; opacity: 0; transition: 0.8s; pointer-events: none; }
         
         @keyframes pulse-anim { 0% { transform: scale(1); opacity: 1; } 70% { transform: scale(2.5); opacity: 0; } 100% { transform: scale(1); opacity: 0; } }
     </style>
 </head>
 <body>
+
+    <div id="welcome-screen">
+        <h1 style="letter-spacing:10px;">BAGVIEW</h1>
+        <p style="opacity:0.6; font-size:12px;">ECO-TOURISM INTERACTIVE GUIDE</p>
+        <button class="start-btn" onclick="initExperience()">START SCANNER</button>
+    </div>
 
     <div id="advisory-trigger" class="advisory-bar" onclick="this.classList.remove('active')">
         <div style="font-size:24px;">⚠️</div>
@@ -68,7 +80,10 @@
             <h2 style="letter-spacing:5px; margin:0;">INQUIRY</h2>
             <div onclick="toggleInquiry()" style="cursor:pointer; background:rgba(255,255,255,0.1); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">✕</div>
         </div>
-        <div class="inquiry-card"><h4 style="color:var(--accent); margin:0;">OPERATING HOURS</h4><p style="font-size:12px; opacity:0.7;">Daily: 6:00 AM - 6:00 PM</p></div>
+        <div class="inquiry-card">
+            <h4 style="color:var(--accent); margin:0;">OPERATING HOURS</h4>
+            <p style="font-size:12px; opacity:0.7;">Daily: 6:00 AM - 6:00 PM</p>
+        </div>
     </div>
 
     <div id="ui-layer">
@@ -88,7 +103,7 @@
             </div>
             <div class="nav-bar">
                 <div class="icon-btn" onclick="toggleInquiry()"><svg viewBox="0 0 24 24" width="22" fill="#fff"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg></div>
-                <div class="cam-btn" id="cam-toggle" onclick="toggleScanner()"><svg viewBox="0 0 24 24" width="32" fill="white" id="cam-icon"><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm7-4h-2.69l-1.83-2H9.52l-1.83 2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-7 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></div>
+                <div class="cam-btn active" id="cam-toggle" onclick="toggleScanner()"><svg viewBox="0 0 24 24" width="32" fill="black" id="cam-icon"><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm7-4h-2.69l-1.83-2H9.52l-1.83 2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-7 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></div>
                 <div class="icon-btn" onclick="location.reload()"><svg viewBox="0 0 24 24" width="22" fill="#fff"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></div>
             </div>
         </div>
@@ -129,41 +144,61 @@
             { name: "PMSEA Garden", thumb: "Assets/PMSEA%20Garden.png" }
         ];
 
+        async function initExperience() {
+            document.getElementById('welcome-screen').style.opacity = '0';
+            setTimeout(() => document.getElementById('welcome-screen').style.display = 'none', 500);
+            document.getElementById('ui-layer').style.opacity = '1';
+            
+            // Start the AR system immediately after user click
+            const sceneEl = document.querySelector('a-scene');
+            await sceneEl.systems['mindar-image-system'].start();
+            updateStatusUI(true);
+        }
+
         async function toggleScanner() {
+            const btn = document.getElementById('cam-toggle');
+            const sceneEl = document.querySelector('a-scene');
+            const shutter = document.getElementById('shutter');
+            
+            if(!btn.classList.contains('active')) {
+                await sceneEl.systems['mindar-image-system'].start();
+                shutter.style.opacity = '0';
+                updateStatusUI(true);
+            } else {
+                sceneEl.systems['mindar-image-system'].stop();
+                shutter.style.opacity = '1';
+                updateStatusUI(false);
+            }
+        }
+
+        function updateStatusUI(isLive) {
             const btn = document.getElementById('cam-toggle');
             const statusBox = document.getElementById('status-box');
             const statusPulse = document.getElementById('status-pulse');
             const statusText = document.getElementById('gps-status');
-            const sceneEl = document.querySelector('a-scene');
             const hud = document.getElementById('gallery-hud');
-            const shutter = document.getElementById('shutter');
-            
-            if(!btn.classList.contains('active')) {
-                try {
-                    await sceneEl.systems['mindar-image-system'].start();
-                    btn.classList.add('active');
-                    hud.classList.add('visible');
-                    shutter.style.opacity = '0';
-                    statusBox.classList.add('live');
-                    statusPulse.classList.add('live');
-                    statusText.innerText = "CAMERA: LIVE";
-                    statusText.style.color = "var(--accent)";
-                    document.getElementById('cam-icon').setAttribute('fill', '#000');
-                } catch (err) { alert("Camera Permission Required."); }
+            const camIcon = document.getElementById('cam-icon');
+
+            if(isLive) {
+                btn.classList.add('active');
+                hud.classList.add('visible');
+                statusBox.classList.add('live');
+                statusPulse.classList.add('live');
+                statusText.innerText = "CAMERA: LIVE";
+                statusText.style.color = "var(--accent)";
+                camIcon.setAttribute('fill', '#000');
             } else {
-                sceneEl.systems['mindar-image-system'].stop();
                 btn.classList.remove('active');
                 hud.classList.remove('visible');
-                shutter.style.opacity = '1';
                 statusBox.classList.remove('live');
                 statusPulse.classList.remove('live');
                 statusText.innerText = "CAMERA: STANDBY";
                 statusText.style.color = "#666";
-                document.getElementById('cam-icon').setAttribute('fill', '#fff');
+                camIcon.setAttribute('fill', '#fff');
             }
         }
 
-        // AUTO-REACT FEATURE: Matches camera target to station cards
+        // Logic for AR matching and Card Toggling
         stations.forEach((s, i) => {
             const target = document.getElementById(`target-${i}`);
             if(target) {
@@ -174,7 +209,7 @@
 
         function handleCardTap(index, forceState) {
             const card = document.getElementById(`card-${index}`);
-            // If forceState is provided (from AR), use that. Otherwise, toggle current state.
+            // Toggle logic: If no forceState, it flips the current state.
             const shouldReact = (forceState !== undefined) ? forceState : !card.classList.contains('react');
             
             document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
