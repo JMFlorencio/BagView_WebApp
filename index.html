@@ -29,7 +29,6 @@
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; background: transparent !important; }
         .top-nav, .bottom-area, .icon-btn, .cam-btn, .station-card, #inquiry-panel { pointer-events: auto; }
 
-        /* Unified Status Toast (Center Screen) */
         #match-notification { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; font-weight: 900; font-size: 11px; letter-spacing: 2px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; backdrop-filter: blur(10px); background: var(--accent); color: #000; text-align: center; min-width: 220px; }
         #match-notification.show { opacity: 1; top: 120px; }
 
@@ -40,13 +39,11 @@
         video.tut-vid { width: 100%; height: 100%; object-fit: cover; position: relative !important; z-index: 1 !important; }
         .skip-fab { margin-top: 25px; background: rgba(255,255,255,0.05); padding: 12px 35px; border-radius: 50px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; letter-spacing: 2px; font-weight: 900; }
 
-        /* Top Status Bar Improvements */
         .top-nav { position: absolute; top: 0; left: 0; right: 0; padding: 30px 20px; display: flex; justify-content: space-between; align-items: flex-start; }
         .gps-display { background: var(--glass); backdrop-filter: var(--blur); padding: 10px 18px; border-radius: 12px; border-left: 3px solid #444; display: flex; align-items: center; gap: 10px; transition: 0.3s; min-width: 160px; }
         
-        /* Status Colors */
         .gps-display.status-live { border-left-color: var(--scanning); }
-        .gps-display.status-match { border-left-color: var(--accent); box-shadow: 0 0 15px rgba(0, 255, 136, 0.3); }
+        .gps-display.status-match { border-left-color: var(--accent); }
 
         .pulse { width: 8px; height: 8px; background: #444; border-radius: 50%; transition: 0.3s; } 
         .pulse.live { background: var(--scanning); animation: pulse-scanning 1.5s infinite; }
@@ -58,10 +55,16 @@
         .bottom-area { position: absolute; bottom: 0; left: 0; right: 0; }
         .bottom-dock { padding: 20px 0 130px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transform: translateY(50px); transition: 0.5s; }
         .bottom-dock.visible { opacity: 1; transform: translateY(0); }
-        .scroll-container { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px; scrollbar-width: none; }
         
-        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
-        .station-card.react { transform: translateY(-20px); border-color: var(--accent); }
+        .scroll-container { 
+            display: flex; gap: 12px; overflow-x: auto; 
+            padding: 0 45vw; scrollbar-width: none; 
+            scroll-behavior: smooth; position: relative;
+        }
+        .scroll-container::-webkit-scrollbar { display: none; }
+        
+        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; position: relative; transform: translateY(0); }
+        .station-card.react { transform: translateY(-30px); border-color: var(--accent); z-index: 10; }
 
         .nav-bar { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 25px; }
         .icon-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -72,7 +75,7 @@
         #shutter { position: fixed; inset: 0; z-index: -1; background: #000; transition: 0.8s; pointer-events: none; }
         
         @keyframes pulse-scanning { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
-        @keyframes pulse-match { from { transform: scale(1); box-shadow: 0 0 0px var(--accent); } to { transform: scale(1.3); box-shadow: 0 0 10px var(--accent); } }
+        @keyframes pulse-match { from { transform: scale(1); } to { transform: scale(1.3); } }
     </style>
 </head>
 <body>
@@ -167,8 +170,6 @@
             const statusBox = document.getElementById('status-container');
             const statusPulse = document.getElementById('status-pulse');
             const statusText = document.getElementById('gps-status');
-
-            // Reset classes
             statusBox.classList.remove('status-live', 'status-match');
             statusPulse.classList.remove('live', 'match');
 
@@ -190,12 +191,21 @@
 
         function handleCardTap(index) {
             const card = document.getElementById(`card-${index}`);
-            document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-            card.classList.add('react');
-            card.scrollIntoView({behavior: "smooth", inline: "center"});
-            
             const toast = document.getElementById('match-notification');
-            toast.innerText = "FIND THE TARGET IMAGE";
+            const scrollContainer = document.querySelector('.scroll-container');
+            if (!card || !scrollContainer) return;
+
+            const isAlreadyUp = card.classList.contains('react');
+            if (isAlreadyUp) {
+                card.classList.remove('react');
+                toast.innerText = "SELECTION RESET";
+            } else {
+                document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
+                card.classList.add('react');
+                toast.innerText = "FIND THE TARGET IMAGE";
+                const scrollToPosition = card.offsetLeft - (scrollContainer.offsetWidth / 2) + (card.offsetWidth / 2);
+                scrollContainer.scrollTo({ left: scrollToPosition, behavior: 'smooth' });
+            }
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
@@ -208,22 +218,20 @@
                 entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
                 entity.addEventListener("targetFound", () => {
                     updateStatusUI('match');
-                    
                     const card = document.getElementById(`card-${i}`);
                     if(card) {
                         document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
                         card.classList.add('react');
-                        card.scrollIntoView({behavior: "smooth", inline: "center"});
+                        const scrollContainer = document.querySelector('.scroll-container');
+                        const scrollToPosition = card.offsetLeft - (scrollContainer.offsetWidth / 2) + (card.offsetWidth / 2);
+                        scrollContainer.scrollTo({ left: scrollToPosition, behavior: 'smooth' });
                     }
-                    
                     const toast = document.getElementById('match-notification');
                     toast.innerText = "IDENTICAL MATCH FOUND!";
                     toast.classList.add('show');
-                    
                     setTimeout(() => { 
                         toast.classList.remove('show');
                         if (s.link && s.link !== "") openStation(i);
-                        // Return to scanning status after handling match
                         setTimeout(() => { if(document.getElementById('cam-toggle').classList.contains('active')) updateStatusUI('scanning'); }, 3000);
                     }, 1500);
                 });
@@ -233,13 +241,9 @@
             const observer = new MutationObserver(() => {
                 const video = document.querySelector('video:not(.tut-vid)');
                 if (video) {
-                    video.style.zIndex = "-5";
-                    video.style.position = "fixed";
-                    video.style.display = "block";
-                    video.style.top = "0";
-                    video.style.left = "0";
-                    video.style.width = "100vw";
-                    video.style.height = "100vh";
+                    video.style.zIndex = "-5"; video.style.position = "fixed";
+                    video.style.display = "block"; video.style.top = "0"; video.style.left = "0";
+                    video.style.width = "100vw"; video.style.height = "100vh";
                 }
             });
             observer.observe(document.body, { childList: true });
@@ -251,24 +255,27 @@
             const camIcon = document.getElementById('cam-icon');
             
             if(!btn.classList.contains('active')) {
+                // START SCANNER
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    stream.getTracks().forEach(track => track.stop());
-
                     await sceneEl.systems['mindar-image-system'].start();
-                    
                     document.body.style.backgroundColor = "transparent";
                     document.getElementById('shutter').style.display = 'none'; 
-                    
                     btn.classList.add('active');
                     document.getElementById('gallery-hud').classList.add('visible');
                     updateStatusUI('scanning');
                     camIcon.setAttribute('fill', '#000');
                 } catch (err) {
-                    alert("Camera blocked. Please check browser permissions.");
+                    alert("Camera blocked.");
                 }
             } else {
-                location.reload(); 
+                // STOP SCANNER WITHOUT REFRESHING PAGE
+                sceneEl.systems['mindar-image-system'].stop();
+                btn.classList.remove('active');
+                document.getElementById('gallery-hud').classList.remove('visible');
+                updateStatusUI('standby');
+                camIcon.setAttribute('fill', '#fff');
+                document.body.style.backgroundColor = "#000";
+                document.getElementById('shutter').style.display = 'block';
             }
         }
 
