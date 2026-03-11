@@ -12,8 +12,10 @@
         :root { --accent: #00ff88; --error: #ff4444; --glass: rgba(0, 0, 0, 0.75); --blur: blur(20px); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000 !important; font-family: 'Segoe UI', sans-serif; color: white; }
+        /* CRITICAL: Background must be transparent for the camera to show through */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: none !important; background-color: #000; font-family: 'Segoe UI', sans-serif; color: white; }
 
+        /* Force the Mind-AR video to the background */
         video { 
             position: fixed !important; 
             top: 0 !important; 
@@ -21,12 +23,14 @@
             width: 100vw !important; 
             height: 100vh !important;
             object-fit: cover !important; 
-            z-index: -1 !important; 
+            z-index: -5 !important; 
+            display: block !important;
         }
 
+        a-scene { background: none !important; background-color: transparent !important; }
         .a-canvas { background: transparent !important; }
 
-        #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; }
+        #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; background: transparent !important; }
         .top-nav, .bottom-area, .icon-btn, .cam-btn, .station-card, #inquiry-panel { pointer-events: auto; }
 
         #match-notification { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; font-weight: 900; font-size: 11px; letter-spacing: 2px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; backdrop-filter: blur(10px); background: var(--accent); color: #000; text-align: center; min-width: 220px; }
@@ -62,7 +66,7 @@
         .cam-btn.active { border-color: var(--accent); background: var(--accent); }
 
         #webview-container { position: fixed; inset: 0; z-index: 3000; background: #000; display: none; flex-direction: column; }
-        #shutter { position: fixed; inset: 0; z-index: -1; background: #000; transition: 0.8s; pointer-events: none; opacity: 1; }
+        #shutter { position: fixed; inset: 0; z-index: -1; background: #000; transition: 0.8s; pointer-events: none; }
         
         @keyframes pulse-anim { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); } }
     </style>
@@ -189,6 +193,21 @@
                 });
                 container.appendChild(entity);
             });
+
+            // FORCE VIDEO VISIBILITY OBSERVER
+            const observer = new MutationObserver(() => {
+                const video = document.querySelector('video');
+                if (video && video.id !== 'tut-video') {
+                    video.style.zIndex = "-5";
+                    video.style.position = "fixed";
+                    video.style.display = "block";
+                    video.style.top = "0";
+                    video.style.left = "0";
+                    video.style.width = "100vw";
+                    video.style.height = "100vh";
+                }
+            });
+            observer.observe(document.body, { childList: true });
         } 
 
         async function toggleScanner() {
@@ -200,31 +219,31 @@
             const camIcon = document.getElementById('cam-icon');
             
             if(!btn.classList.contains('active')) {
-                // Check if the site is secure
-                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-                    alert("AR requires an HTTPS connection. Please check your URL.");
-                    return;
-                }
-
                 try {
-                    // Pre-request permissions manually
+                    // Pre-request permissions
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    stream.getTracks().forEach(track => track.stop()); // Close test stream
+                    stream.getTracks().forEach(track => track.stop());
 
+                    // Start Engine
                     await sceneEl.systems['mindar-image-system'].start();
+                    
+                    // CLEANUP UI FOR CAMERA
+                    document.body.style.backgroundColor = "transparent";
+                    document.documentElement.style.backgroundColor = "transparent";
+                    document.getElementById('shutter').style.display = 'none'; // REMOVE SHUTTER
+                    
                     btn.classList.add('active');
                     document.getElementById('gallery-hud').classList.add('visible');
-                    document.getElementById('shutter').style.opacity = '0';
                     statusBox.classList.add('live');
                     statusPulse.classList.add('live');
                     statusText.innerText = "CAMERA: LIVE";
                     statusText.style.color = "var(--accent)";
                     camIcon.setAttribute('fill', '#000');
                 } catch (err) {
-                    alert("Camera Access Denied: Please check browser permissions.");
+                    alert("Camera blocked. Please check browser permissions.");
                 }
             } else {
-                location.reload(); // Best way to fully release camera hardware on mobile
+                location.reload(); 
             }
         }
 
