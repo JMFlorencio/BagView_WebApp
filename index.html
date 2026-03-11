@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BAGVIEW | AR Eco-Tourism</title>
+    
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+    <style>
+        :root { --accent: #00ff88; --error: #ff4444; --glass: rgba(0, 0, 0, 0.75); --blur: blur(20px); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        /* FIX 1: Body must be transparent for camera to show through */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; font-family: 'Segoe UI', sans-serif; color: white; }
+
+        /* FIX 2: Force the video feed to stay behind the UI but above the background */
+        video { 
+            position: fixed !important; 
+            top: 0 !important; 
+            left: 0 !important; 
+            width: 100vw !important; 
+            height: 100vh !important;
+            object-fit: cover !important; 
+            z-index: -1 !important; 
+        }
+
+        /* FIX 3: Ensure AR canvas doesn't have a black background */
+        .a-canvas { background: transparent !important; }
+
+        #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; }
+        .top-nav, .bottom-area, .full-page, .advisory-trigger, .icon-btn, .cam-btn, .station-card { pointer-events: auto; }
+
+        #match-notification { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); padding: 12px 25px; border-radius: 50px; font-weight: 900; font-size: 11px; letter-spacing: 2px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; backdrop-filter: blur(10px); background: var(--accent); color: #000; text-align: center; min-width: 220px; }
+        #match-notification.show { opacity: 1; top: 120px; }
+
+        .overlay-screen { position: fixed; inset: 0; z-index: 2000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.8s ease; }
+        .hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+        
+        .video-container { width: 90%; max-width: 600px; aspect-ratio: 16/9; border-radius: 20px; overflow: hidden; border: 1px solid var(--accent); position: relative; background: #050505; }
+        video.tut-vid { width: 100%; height: 100%; object-fit: cover; position: relative !important; z-index: 1 !important; }
+        .skip-fab { margin-top: 25px; background: rgba(255,255,255,0.05); padding: 12px 35px; border-radius: 50px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; letter-spacing: 2px; font-weight: 900; }
+
+        .top-nav { position: absolute; top: 0; left: 0; right: 0; padding: 30px 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .gps-display { background: var(--glass); backdrop-filter: var(--blur); padding: 10px 18px; border-radius: 12px; border-left: 3px solid var(--accent); display: flex; align-items: center; gap: 10px; }
+        .pulse { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse-anim 2s infinite; } 
+
+        .bottom-area { position: absolute; bottom: 0; left: 0; right: 0; }
+        .bottom-dock { padding: 20px 0 130px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); opacity: 0; transform: translateY(50px); transition: 0.5s; }
+        .bottom-dock.visible { opacity: 1; transform: translateY(0); }
+        .scroll-container { display: flex; gap: 12px; overflow-x: auto; padding: 0 20px; scrollbar-width: none; }
+        
+        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
+        .station-card.react { transform: translateY(-20px); border-color: var(--accent); }
+
+        .nav-bar { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 25px; }
+        .icon-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cam-btn { width: 75px; height: 75px; border-radius: 50%; background: #000; border: 3px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cam-btn.active { border-color: var(--accent); background: var(--accent); }
+
+        #webview-container { position: fixed; inset: 0; z-index: 3000; background: #000; display: none; flex-direction: column; }
+        #shutter { position: fixed; inset: 0; z-index: -1; background: #000; transition: 0.8s; pointer-events: none; }
+        
+        @keyframes pulse-anim { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); } }
+    </style>
+</head>
+<body>
+
+    <div id="match-notification">IDENTICAL MATCH</div>
+
+    <div id="webview-container">
+        <div style="background:#111; padding:15px; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #333;">
+            <span id="web-title" style="color:var(--accent); font-weight:900;">STATION INFO</span>
+            <button onclick="closeWebView()" style="background:none; border: 1px solid #444; color:white; padding: 5px 15px; border-radius: 20px;">CLOSE</button>
+        </div>
+        <iframe id="web-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+    </div>
+
+    <div id="home-page" class="overlay-screen">
+        <h1 style="font-size:48px; margin:0; letter-spacing:8px; font-weight:900;">BAG<span style="color:var(--accent)">VIEW</span></h1>
+        <p style="color:#555; letter-spacing:5px; font-size:10px;">ENVIRONMENTAL AR GUIDE</p>
+        <button onclick="goToTutorial()" style="background:var(--accent); border:none; padding:18px 60px; border-radius:50px; font-weight:900; margin-top:100px; cursor:pointer;">EXPLORE</button>
+    </div>
+
+    <div id="tutorial-page" class="overlay-screen hidden">
+        <div class="video-container"><video id="tut-video" class="tut-vid" playsinline><source src="Assets/tutorial.mp4" type="video/mp4"></video></div>
+        <div class="skip-fab" onclick="finishTutorial()">SKIP TUTORIAL ➔</div>
+    </div>
+
+    <div id="ui-layer" class="hidden">
+        <div class="top-nav">
+            <div class="gps-display">
+                <div class="pulse"></div>
+                <div id="gps-status" style="font-size:11px; font-weight:900;">INITIALIZING...</div>
+            </div>
+        </div>
+
+        <div class="bottom-area">
+            <div class="bottom-dock" id="gallery-hud">
+                <div class="scroll-container" id="gallery-root"></div>
+            </div>
+            <div class="nav-bar">
+                <div class="icon-btn" onclick="alert('Inquiry Mode')"><svg viewBox="0 0 24 24" width="22" fill="#fff"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg></div>
+                <div class="cam-btn" id="cam-toggle" onclick="toggleScanner()"><svg viewBox="0 0 24 24" width="32" fill="white"><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm7-4h-2.69l-1.83-2H9.52l-1.83 2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-7 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg></div>
+                <div class="icon-btn" onclick="location.reload()"><svg viewBox="0 0 24 24" width="22" fill="#fff"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="shutter"></div>
+
+    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" embedded renderer="transparent: true; alpha: true;" vr-mode-ui="enabled: false">
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <a-entity id="target-container"></a-entity>
+    </a-scene>
+
+    <script>
+        const stations = [
+            { name: "Map", thumb: "Assets/A1_Map.jpg", link: "https://jmflorencio.github.io/BaguioBotanicalMap/" },
+            { name: "Arbor", thumb: "Assets/Arbor.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
+            { name: "Cactus & Succulents", thumb: "Assets/Cactus&Succulents.png", link: "" },
+            { name: "Chinese Garden", thumb: "Assets/Chinese%20Garden.png", link: "" },
+            { name: "Friendship Garden", thumb: "Assets/City%20of%20Vaughan%20Friendship%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
+            { name: "Cordillera Village", thumb: "Assets/Cordillera%20Village.png", link: "" },
+            { name: "Greenhouse", thumb: "Assets/Greenhouse.png", link: "" },
+            { name: "Japanese Garden", thumb: "Assets/Japanese%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
+            { name: "Japanese Tunnel", thumb: "Assets/Japanese%20Tunnel.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
+            { name: "Korea Garden", thumb: "Assets/Korea%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
+            { name: "Orchidarium", thumb: "Assets/Orchidarium.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" },
+            { name: "PMSEA Garden", thumb: "Assets/PMSEA%20Garden.png", link: "https://tour.panoee.net/69aa67e9add064456619ce3d/69aa73d3add0647cc419cf6d" }
+        ];
+
+        function buildUI() {
+            const root = document.getElementById('gallery-root');
+            root.innerHTML = stations.map((s, i) => `
+                <div class="station-card" id="card-${i}" onclick="handleCardTap(${i})">
+                    <div style="height:75%; background:#1a1a1a; overflow:hidden;">
+                        <img src="${s.thumb}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'">
+                    </div>
+                    <div style="font-size:8px; text-align:center; padding:8px 4px; font-weight:bold; color:#fff; text-transform:uppercase;">${s.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function handleCardTap(index) {
+            const card = document.getElementById(`card-${index}`);
+            const isAlreadyActive = card.classList.contains('react');
+            document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
+            if (!isAlreadyActive) {
+                card.classList.add('react');
+                card.scrollIntoView({behavior: "smooth", inline: "center"});
+                const toast = document.getElementById('match-notification');
+                toast.innerText = "FIND THE TARGET IMAGE";
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }
+        }
+
+        function setupTracking() {
+            const container = document.getElementById('target-container');
+            stations.forEach((s, i) => {
+                const entity = document.createElement('a-entity');
+                entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
+                entity.addEventListener("targetFound", () => {
+                    document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
+                    const card = document.getElementById(`card-${i}`);
+                    if(card) {
+                        card.classList.add('react');
+                        card.scrollIntoView({behavior: "smooth", inline: "center"});
+                    }
+                    const toast = document.getElementById('match-notification');
+                    toast.innerText = "IDENTICAL MATCH FOUND!";
+                    toast.classList.add('show');
+                    setTimeout(() => { 
+                        toast.classList.remove('show');
+                        if (s.link) openStation(i); 
+                    }, 1200);
+                });
+                container.appendChild(entity);
+            });
+        } 
+
+        async function toggleScanner() {
+            const btn = document.getElementById('cam-toggle');
+            const hud = document.getElementById('gallery-hud');
+            const sceneEl = document.querySelector('a-scene');
+            
+            if(!btn.classList.contains('active')) {
+                try {
+                    // Start the scanner
+                    await sceneEl.systems['mindar-image-system'].start();
+                    
+                    btn.classList.add('active');
+                    hud.classList.add('visible');
+                    document.getElementById('shutter').style.opacity = '0';
+                    document.getElementById('gps-status').innerText = "SCANNING...";
+
+                    // MOBILE VIDEO FIX: Force the system-generated video to play
+                    const checkVideo = setInterval(() => {
+                        const video = document.querySelector('video');
+                        if (video) {
+                            video.setAttribute('playsinline', ''); // Essential for iOS
+                            video.setAttribute('webkit-playsinline', ''); 
+                            video.play();
+                            clearInterval(checkVideo);
+                        }
+                    }, 500);
+
+                } catch (err) {
+                    alert("Camera access denied! Check your browser settings.");
+                }
+            } else {
+                location.reload(); 
+            }
+        }
+
+        function goToTutorial() {
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('tutorial-page').classList.remove('hidden');
+            document.getElementById('tut-video').play();
+        }
+
+        function finishTutorial() {
+            document.getElementById('tut-video').pause();
+            document.getElementById('tutorial-page').classList.add('hidden');
+            document.getElementById('ui-layer').classList.remove('hidden');
+            buildUI();
+            setupTracking();
+        }
+
+        function openStation(index) {
+            const s = stations[index];
+            document.getElementById('web-frame').src = s.link;
+            document.getElementById('web-title').innerText = s.name + " INFO";
+            document.getElementById('webview-container').style.display = 'flex';
+        }
+
+        function closeWebView() { 
+            document.getElementById('webview-container').style.display = 'none'; 
+            document.getElementById('web-frame').src = ''; 
+        }
+    </script>
+</body>
+</html>
