@@ -27,9 +27,7 @@
         .a-canvas { background: transparent !important; }
 
         #ui-layer { position: fixed; inset: 0; z-index: 100; pointer-events: none; transition: 0.5s; background: transparent !important; }
-        .top-nav, .bottom-area, .icon-btn, .cam-btn, .station-card, #inquiry-panel { pointer-events: auto; }
-
-        /* Notification box removed from CSS */
+        .top-nav, .bottom-area, .icon-btn, .cam-btn, .station-card, #inquiry-panel, .drag-handle { pointer-events: auto; }
 
         .overlay-screen { position: fixed; inset: 0; z-index: 2000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: 0.8s ease; }
         .hidden { opacity: 0; pointer-events: none; visibility: hidden; }
@@ -53,34 +51,38 @@
 
         .bottom-area { position: absolute; bottom: 0; left: 0; right: 0; }
         
+        /* Updated Collapsible Dock */
         .bottom-dock { 
-            padding: 20px 0 130px; 
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); 
-            opacity: 0; 
-            transform: translateY(50px); 
-            transition: 0.5s; 
-            width: 100vw; 
+            position: absolute;
+            bottom: 0;
+            width: 100vw;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 80%, transparent); 
+            transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            transform: translateY(calc(100% - 45px)); /* Show only handle */
+            z-index: 120;
+            padding-bottom: 120px;
         }
-        .bottom-dock.visible { opacity: 1; transform: translateY(0); }
+        .bottom-dock.expanded { transform: translateY(0); }
         
+        /* Drag Handle UI */
+        .drag-handle { width: 100%; height: 45px; display: flex; justify-content: center; align-items: center; cursor: grab; }
+        .handle-bar { width: 45px; height: 5px; background: rgba(255,255,255,0.3); border-radius: 10px; }
+
         .scroll-container { 
             display: flex; 
             gap: 12px; 
             overflow-x: auto; 
-            padding: 0 20px 20px 20px; 
+            padding: 10px 20px 20px 20px; 
             scrollbar-width: none; 
             scroll-behavior: smooth; 
-            position: relative;
-            justify-content: flex-start; 
-            align-items: flex-end;
             width: 100%;
         }
         .scroll-container::-webkit-scrollbar { display: none; }
         
-        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; position: relative; transform: translateY(0); }
-        .station-card.react { transform: translateY(-30px); border-color: var(--accent); z-index: 10; }
+        .station-card { min-width: 100px; height: 130px; background: #111; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; transition: 0.4s; cursor: pointer; }
+        .station-card.react { transform: translateY(-10px); border-color: var(--accent); }
 
-        .nav-bar { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 25px; }
+        .nav-bar { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 25px; z-index: 150; }
         .icon-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--glass); backdrop-filter: var(--blur); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .cam-btn { width: 75px; height: 75px; border-radius: 50%; background: #000; border: 3px solid #333; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
         .cam-btn.active { border-color: var(--accent); background: var(--accent); }
@@ -133,6 +135,7 @@
         </div>
         <div class="bottom-area">
             <div class="bottom-dock" id="gallery-hud">
+                <div class="drag-handle" id="drag-zone"><div class="handle-bar"></div></div>
                 <div class="scroll-container" id="gallery-root"></div>
             </div>
             <div class="nav-bar">
@@ -166,6 +169,7 @@
             { name: "PMSEA Garden", thumb: "Assets/PMSEA%20Garden.png", link: "https://tour.panoee.net/69b7b586a3e4d741fdc8db26" }
         ];
 
+        // UI Building
         function buildUI() {
             const root = document.getElementById('gallery-root');
             root.innerHTML = stations.map((s, i) => `
@@ -177,6 +181,19 @@
                 </div>
             `).join('');
         }
+
+        // Draggable Logic
+        let touchStartY = 0;
+        const hud = document.getElementById('gallery-hud');
+        const dragZone = document.getElementById('drag-zone');
+
+        dragZone.addEventListener('touchstart', (e) => touchStartY = e.touches[0].clientY, { passive: true });
+        dragZone.addEventListener('touchend', (e) => {
+            let diff = touchStartY - e.changedTouches[0].clientY;
+            if (diff > 30) hud.classList.add('expanded');
+            else if (diff < -30) hud.classList.remove('expanded');
+        });
+        dragZone.addEventListener('click', () => hud.classList.toggle('expanded'));
 
         function updateStatusUI(type) {
             const statusBox = document.getElementById('status-container');
@@ -200,21 +217,21 @@
                 statusText.style.color = "var(--accent)";
             }
         }
-
-        function handleCardTap(index) {
+function handleCardTap(index) {
             const card = document.getElementById(`card-${index}`);
             const scrollContainer = document.querySelector('.scroll-container');
             if (!card || !scrollContainer) return;
 
-            const isAlreadyUp = card.classList.contains('react');
-            if (isAlreadyUp) {
-                card.classList.remove('react');
-            } else {
-                document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-                card.classList.add('react');
-                const scrollToPosition = card.offsetLeft - (scrollContainer.offsetWidth / 2) + (card.offsetWidth / 2);
-                scrollContainer.scrollTo({ left: scrollToPosition, behavior: 'smooth' });
-            }
+            // Remove highlight from all others and add to this one
+            document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
+            card.classList.add('react');
+
+            // Just scroll it into the center of the dock
+            const scrollToPosition = card.offsetLeft - (scrollContainer.offsetWidth / 2) + (card.offsetWidth / 2);
+            scrollContainer.scrollTo({ left: scrollToPosition, behavior: 'smooth' });
+            
+            // NOTE: openStation(index) is REMOVED from here so clicking the image 
+            // does NOT open the website.
         }
 
         function setupTracking() {
@@ -223,33 +240,29 @@
             stations.forEach((s, i) => {
                 const entity = document.createElement('a-entity');
                 entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
+                
                 entity.addEventListener("targetFound", () => {
                     updateStatusUI('match');
-                    const card = document.getElementById(`card-${i}`);
-                    if(card) {
-                        document.querySelectorAll('.station-card').forEach(c => c.classList.remove('react'));
-                        card.classList.add('react');
-                        const scrollContainer = document.querySelector('.scroll-container');
-                        const scrollToPosition = card.offsetLeft - (scrollContainer.offsetWidth / 2) + (card.offsetWidth / 2);
-                        scrollContainer.scrollTo({ left: scrollToPosition, behavior: 'smooth' });
+                    hud.classList.add('expanded'); // Slide the dock up to show the match
+                    
+                    // HIGHLIGHT and SCROLL to the matching card
+                    handleCardTap(i); 
+
+                    // ONLY OPEN the link when the AR target is actually found
+                    if (s.link && s.link !== "") {
+                        setTimeout(() => openStation(i), 500); // Small delay for better UX
                     }
-                    if (s.link && s.link !== "") openStation(i);
-                    setTimeout(() => { if(document.getElementById('cam-toggle').classList.contains('active')) updateStatusUI('scanning'); }, 3000);
                 });
+
+                entity.addEventListener("targetLost", () => {
+                    updateStatusUI('scanning');
+                });
+
                 container.appendChild(entity);
             });
-
-            const observer = new MutationObserver(() => {
-                const video = document.querySelector('video:not(.tut-vid)');
-                if (video) {
-                    video.style.zIndex = "-5"; video.style.position = "fixed";
-                    video.style.display = "block"; video.style.top = "0"; video.style.left = "0";
-                    video.style.width = "100vw"; video.style.height = "100vh";
-                }
-            });
-            observer.observe(document.body, { childList: true });
-        } 
-
+            
+            // ... (keep the existing MutationObserver code below this)
+        }
         async function toggleScanner() {
             const btn = document.getElementById('cam-toggle');
             const sceneEl = document.querySelector('a-scene');
@@ -261,16 +274,12 @@
                     document.body.style.backgroundColor = "transparent";
                     document.getElementById('shutter').style.display = 'none'; 
                     btn.classList.add('active');
-                    document.getElementById('gallery-hud').classList.add('visible');
                     updateStatusUI('scanning');
                     camIcon.setAttribute('fill', '#000');
-                } catch (err) {
-                    alert("Camera blocked.");
-                }
+                } catch (err) { alert("Camera blocked."); }
             } else {
                 sceneEl.systems['mindar-image-system'].stop();
                 btn.classList.remove('active');
-                document.getElementById('gallery-hud').classList.remove('visible');
                 updateStatusUI('standby');
                 camIcon.setAttribute('fill', '#fff');
                 document.body.style.backgroundColor = "#000";
