@@ -234,7 +234,7 @@ function handleCardTap(index) {
             // does NOT open the website.
         }
 
-        function setupTracking() {
+      function setupTracking() {
             const container = document.getElementById('target-container');
             container.innerHTML = "";
             stations.forEach((s, i) => {
@@ -242,15 +242,19 @@ function handleCardTap(index) {
                 entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
                 
                 entity.addEventListener("targetFound", () => {
+                    // --- VIBRATION EFFECT ---
+                    if ("vibrate" in navigator) {
+                        navigator.vibrate(100); // Vibrates for 100 milliseconds
+                    }
+                    // ------------------------
+
                     updateStatusUI('match');
-                    hud.classList.add('expanded'); // Slide the dock up to show the match
+                    hud.classList.add('expanded'); 
                     
-                    // HIGHLIGHT and SCROLL to the matching card
                     handleCardTap(i); 
 
-                    // ONLY OPEN the link when the AR target is actually found
                     if (s.link && s.link !== "") {
-                        setTimeout(() => openStation(i), 500); // Small delay for better UX
+                        setTimeout(() => openStation(i), 500); 
                     }
                 });
 
@@ -260,8 +264,6 @@ function handleCardTap(index) {
 
                 container.appendChild(entity);
             });
-            
-            // ... (keep the existing MutationObserver code below this)
         }
         async function toggleScanner() {
             const btn = document.getElementById('cam-toggle');
