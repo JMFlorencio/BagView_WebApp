@@ -154,10 +154,6 @@
     </a-scene>
 
     <script>
-        // MASTER VOLUME CONTROLS
-        const VOL_SFX = 0.2;
-        const VOL_TUT = 0.5;
-
         const stations = [
             { name: "Map", thumb: "Assets/A1_Map.jpg", link: "https://jmflorencio.github.io/BagView_Botanical_Map/" },
             { name: "Arbor", thumb: "Assets/Arbor.png", link: "https://tour.panoee.net/69b7b676cd5918466513b640" },
@@ -238,11 +234,8 @@
                 entity.setAttribute('mindar-image-target', `targetIndex: ${i}`);
                 
                 entity.addEventListener("targetFound", () => {
-                    if ("vibrate" in navigator) {
-                        navigator.vibrate([100, 50, 100]);
-                    }
+                    if ("vibrate" in navigator) { navigator.vibrate([100, 50, 100]); }
                     const sound = document.getElementById('match-sound');
-                    sound.volume = VOL_SFX;
                     sound.currentTime = 0;
                     sound.play();
 
@@ -251,7 +244,7 @@
                     handleCardTap(i); 
 
                     if (s.link && s.link !== "") {
-                        setTimeout(() => openStation(i), 500); 
+                        openStation(i); 
                     }
                 });
 
@@ -294,15 +287,11 @@
 
         function goToTutorial() {
             const sound = document.getElementById('match-sound');
-            sound.volume = VOL_SFX;
             sound.play().then(() => { sound.pause(); sound.currentTime = 0; }).catch(e => {});
-
-            const tutVideo = document.getElementById('tut-video');
-            tutVideo.volume = VOL_TUT;
 
             document.getElementById('home-page').classList.add('hidden');
             document.getElementById('tutorial-page').classList.remove('hidden');
-            tutVideo.play();
+            document.getElementById('tut-video').play();
         }
 
         function finishTutorial() {
