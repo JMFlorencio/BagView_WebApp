@@ -154,10 +154,6 @@
     </a-scene>
 
     <script>
-        // --- MASTER VOLUME CONFIG ---
-        const VOL_SFX = 0.2;   // 20% volume for match sound
-        const VOL_TUT = 0.5;   // 50% volume for tutorial video
-
         const stations = [
             { name: "Map", thumb: "Assets/A1_Map.jpg", link: "https://jmflorencio.github.io/BagView_Botanical_Map/" },
             { name: "Arbor", thumb: "Assets/Arbor.png", link: "https://tour.panoee.net/69b7b676cd5918466513b640" },
@@ -240,10 +236,9 @@
                 entity.addEventListener("targetFound", () => {
                     // --- FEEDBACK: VIBRATE & SOUND ---
                     if ("vibrate" in navigator) {
-                        navigator.vibrate([100, 50, 100]); 
+                        navigator.vibrate([100, 50, 100]); // Heartbeat pulse
                     }
                     const sound = document.getElementById('match-sound');
-                    sound.volume = VOL_SFX; // Applied Master Volume
                     sound.currentTime = 0;
                     sound.play();
                     // ---------------------------------
@@ -295,16 +290,13 @@
         }
 
         function goToTutorial() {
+            // Wake up audio context for mobile
             const sound = document.getElementById('match-sound');
-            sound.volume = VOL_SFX;
             sound.play().then(() => { sound.pause(); sound.currentTime = 0; }).catch(e => {});
-
-            const tutVideo = document.getElementById('tut-video');
-            tutVideo.volume = VOL_TUT; // Applied Master Volume for Tutorial
 
             document.getElementById('home-page').classList.add('hidden');
             document.getElementById('tutorial-page').classList.remove('hidden');
-            tutVideo.play();
+            document.getElementById('tut-video').play();
         }
 
         function finishTutorial() {
